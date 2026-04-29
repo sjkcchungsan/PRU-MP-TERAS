@@ -62,21 +62,23 @@
 
         .suku-0 { color: #2563eb; } .suku-1 { color: #dc2626; } .suku-2 { color: #16a34a; } .suku-3 { color: #ea580c; } .suku-4 { color: #9333ea; }
 
-        .print-page { background: white; padding: 1.5cm; color: black; font-family: "Times New Roman", serif; }
-        .print-header { text-align: center; border-bottom: 2pt solid black; margin-bottom: 20px; padding-bottom: 10px; }
-        .print-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        .print-table th, .print-table td { border: 1pt solid #000; padding: 12px; text-align: left; }
-        .font-main-content { font-size: 16pt; font-weight: bold; }
-        .font-sub-content { font-size: 14pt; color: #000; }
+        /* PDF 样式更新 */
+        .print-page { background: white; padding: 1.2cm; color: black; font-family: "Times New Roman", serif; }
+        .print-header { text-align: center; border-bottom: 2pt solid black; margin-bottom: 15px; padding-bottom: 10px; }
+        .print-meta { display: flex; justify-content: space-between; margin-bottom: 15px; font-weight: bold; font-size: 12pt; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+        .print-table { width: 100%; border-collapse: collapse; margin-top: 5px; }
+        .print-table th, .print-table td { border: 1pt solid #000; padding: 14px; text-align: left; }
+        .font-main-content { font-size: 17pt; font-weight: bold; }
+        .font-sub-content { font-size: 15pt; color: #000; }
 
-        ruby { font-size: 16pt; font-weight: bold; }
-        rt { font-size: 10pt; font-weight: normal; font-style: italic; color: #444; }
+        ruby { font-size: 17pt; font-weight: bold; }
+        rt { font-size: 11pt; font-weight: normal; font-style: italic; color: #444; }
 
         @media print {
-            body { background: white; }
+            body { background: white; padding: 0; }
             .no-print { display: none !important; }
-            #print-section { display: block !important; }
-            .print-page { page-break-after: always; height: auto; padding: 1cm; }
+            #print-section { display: block !important; width: 100%; }
+            .print-page { page-break-after: always; height: auto; margin: 0; border: none; }
         }
     </style>
 </head>
@@ -167,7 +169,7 @@
     <div id="manager-modal" class="hidden-panel fixed inset-0 z-[5000] bg-black/95 backdrop-blur-xl flex items-center justify-center p-10">
         <div class="bg-white rounded-[3rem] w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
             <div class="p-8 border-b flex justify-between bg-gray-50">
-                <h2 class="text-3xl font-black">⚙️ 管理中心</h2>
+                <h2 class="text-3xl font-black">⚙️ 内容管理中心</h2>
                 <button onclick="toggleManager()" class="text-6xl text-gray-300 hover:text-gray-900 transition">&times;</button>
             </div>
             <div id="category-tabs" class="px-10 py-4 flex gap-3 bg-white border-b"></div>
@@ -324,13 +326,17 @@
             }
         }
 
-        // --- 修复同步与重复显示 Bug ---
+        // --- 修复同步逻辑：喇叭在中间，字在下面 ---
         function renderBMStudy(q, a) {
             stopAllAudioLogic();
             const stage = document.getElementById('game-stage');
-            stage.innerHTML = ''; // 核心修复：先清空，防止文字堆叠
+            stage.innerHTML = `
+                <div class="flex flex-col items-center justify-center">
+                    <div id="study-speaker" class="text-[20vh] mb-16 animate-bounce">🔊</div>
+                    <div id="study-text" class="opacity-0 transition-opacity duration-500"></div>
+                </div>
+            `;
 
-            // 配置按钮
             document.getElementById('next-action').className = 'visible';
             document.getElementById('speak-action').className = 'visible';
             document.getElementById('speak-btn').onclick = () => renderBMStudy(q, a);
@@ -340,18 +346,13 @@
             utterance.lang = 'ms-MY';
             utterance.rate = 0.55;
 
-            utterance.onstart = () => {
-                // 朗读时显示动态喇叭
-                stage.innerHTML = `<div class="text-[20vh] animate-bounce">🔊</div>`;
-            };
-
             utterance.onend = () => {
-                // 朗读结束一次性展示
-                stage.innerHTML = `
-                    <div class="text-center animate-score">
-                        <div class="giant-text text-white mb-8">${a.toLowerCase()}</div>
-                        <div class="sub-giant-text tracking-widest" style="font-size:10vh;">${getColoredSukuKata(q)}</div>
-                    </div>`;
+                const speaker = document.getElementById('study-speaker');
+                const textContainer = document.getElementById('study-text');
+                speaker.classList.remove('animate-bounce');
+                // 只显示彩色音节字
+                textContainer.innerHTML = `<div class="sub-giant-text tracking-widest" style="font-size:12vh;">${getColoredSukuKata(q)}</div>`;
+                textContainer.classList.remove('opacity-0');
             };
 
             window.speechSynthesis.speak(utterance);
@@ -456,7 +457,7 @@
             const rawArr = f.content.split('\n').filter(l => l.includes(','));
             const isBC = currentSub === 'BC';
 
-            // 预先生成同步的乱序 Soalan 映射，确保两个页面一致
+            // 预先生成同步的乱序映射，确保两个页面一致
             const scrambledMap = rawArr.map(line => {
                 const [q, a] = line.split(',');
                 return { 
@@ -466,39 +467,74 @@
                 };
             });
 
-            let h = `<div class="print-page">
+            // 构建两页 HTML，彻底修复打印 3 页的 Bug
+            let h = `
+            <div class="print-page">
                 <div class="print-header">
                     <h1 style="margin:0; font-size:24pt;">PRU Programme - SJK(C) Chung San</h1>
                     <h2 style="margin:5pt 0; font-size:18pt;">Subjek: ${currentSub} | Unit: ${f.name}</h2>
                 </div>
-                <h3 style="background:#f2f2f2; padding:8px; margin:0; border-left:8px solid #000;">Nota Pembelajaran</h3>
+                <div class="print-meta">
+                    <span>Nama: ________________________________</span>
+                    <span>Kelas: _________________</span>
+                </div>
+                <h3 style="background:#f2f2f2; padding:10px; margin:0; border-left:10px solid #000; font-size:14pt;">Nota Pembelajaran</h3>
                 <table class="print-table">
-                    <thead><tr style="background:#eee;"><th width="10%">Bil</th><th class="font-sub-content">Soalan</th><th class="font-main-content">Jawapan</th></tr></thead>
+                    <thead><tr style="background:#eee;">
+                        <th width="10%">Bil</th>
+                        <th width="45%" class="font-sub-content">Soalan</th>
+                        <th class="font-main-content">Jawapan</th>
+                    </tr></thead>
                     <tbody>${scrambledMap.map((item, i) => { 
                         const ansDisplay = isBC ? `<ruby class="font-main-content">${item.ans}<rt>${item.originalQ}</rt></ruby>` : `<b class="font-main-content">${item.ans.toLowerCase()}</b>`;
                         return `<tr><td>${i+1}</td><td class="font-sub-content">${item.scrambledQ.toLowerCase()}</td><td>${ansDisplay}</td></tr>` 
                     }).join('')}</tbody>
                 </table>
-                <div style="page-break-before: always;"></div>
+            </div>
+
+            <div class="print-page">
                 <div class="print-header">
                     <h1 style="margin:0; font-size:24pt;">PRU Programme - SJK(C) Chung San</h1>
+                    <h2 style="margin:5pt 0; font-size:18pt;">Latihan Kendiri (Ujian)</h2>
                 </div>
-                <h3 style="background:#f2f2f2; padding:8px; margin:0; border-left:8px solid #000;">Sesi Latihan Kendiri</h3>
+                <div class="print-meta">
+                    <span>Nama: ________________________________</span>
+                    <span>Kelas: _________________</span>
+                </div>
+                <h3 style="background:#f2f2f2; padding:10px; margin:0; border-left:10px solid #000; font-size:14pt;">Sesi Latihan Kendiri</h3>
                 <table class="print-table">
-                    <thead><tr style="background:#eee;"><th width="10%">Bil</th><th class="font-sub-content">Soalan</th><th width="40%" class="font-main-content">Jawapan</th></tr></thead>
+                    <thead><tr style="background:#eee;">
+                        <th width="10%">Bil</th>
+                        <th width="45%" class="font-sub-content">Soalan</th>
+                        <th class="font-main-content">Jawapan</th>
+                    </tr></thead>
                     <tbody>${scrambledMap.map((item, i) => { 
-                        return `<tr><td style="height:60px;">${i+1}</td><td class="font-sub-content" style="font-weight:bold;">${item.scrambledQ.toLowerCase()}</td><td></td></tr>` 
+                        return `<tr><td style="height:65px;">${i+1}</td><td class="font-sub-content" style="font-weight:bold;">${item.scrambledQ.toLowerCase()}</td><td></td></tr>` 
                     }).join('')}</tbody>
                 </table>
             </div>`;
+
             document.getElementById('print-preview-content').innerHTML = h;
             document.getElementById('print-modal').classList.remove('hidden-panel');
         }
 
-        function executePrint() { document.getElementById('print-section').innerHTML = document.getElementById('print-preview-content').innerHTML; window.print(); }
-        function closePrintModal() { document.getElementById('print-modal').classList.add('hidden-panel'); }
+        function executePrint() { 
+            // 核心修复：只将预览内容拷贝到打印区
+            const printContent = document.getElementById('print-preview-content').innerHTML;
+            document.getElementById('print-section').innerHTML = printContent;
+            window.print(); 
+        }
+        
+        function closePrintModal() { 
+            document.getElementById('print-modal').classList.add('hidden-panel'); 
+        }
 
-        function toggleManager() { document.getElementById('manager-modal').classList.toggle('hidden-panel'); renderManagerTabs(); renderManagerFolders(); }
+        function toggleManager() { 
+            document.getElementById('manager-modal').classList.toggle('hidden-panel'); 
+            renderManagerTabs(); 
+            renderManagerFolders(); 
+        }
+        
         function renderManagerTabs() {
             const tabs = document.getElementById('category-tabs'); tabs.innerHTML = '';
             Object.keys(masterData).forEach(s => {
@@ -507,6 +543,7 @@
                 tabs.appendChild(b);
             });
         }
+        
         function renderManagerFolders() {
             const list = document.getElementById('manager-folder-list'); list.innerHTML = '';
             masterData[activeEditSub].forEach((f, i) => {
@@ -515,6 +552,7 @@
                 list.appendChild(d);
             });
         }
+        
         function loadArea() { const f = masterData[activeEditSub][activeEditIdx]; document.getElementById('edit-area').value = f?f.content:''; }
         function saveChanges() { masterData[activeEditSub][activeEditIdx].content = document.getElementById('edit-area').value; showToast("OK"); }
         function showToast(m) { const t = document.getElementById('toast'); t.innerText = m; t.style.opacity = '1'; setTimeout(()=>t.style.opacity='0', 2000); }
