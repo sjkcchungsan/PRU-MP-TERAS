@@ -2,16 +2,16 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>PRU (Programme Remember & Understand) - 实巴荷中山学校</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* 字体引入 */
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Playfair+Display:ital,wght@0,700;1,700&family=ZCOOL+KuaiLe&display=swap');
         
-        /* 16:9 横屏核心优化 */
+        /* 核心布局：应用最大化，禁止滚动 */
         :root {
-            --tv-safe-gap: 4vw;
+            --tv-safe-gap: 3.5vw;
         }
 
         body { 
@@ -20,18 +20,24 @@
             margin: 0; 
             height: 100vh;
             width: 100vw;
-            background-color: #000; /* 背景黑底，防止非16:9屏幕露白 */
+            background-color: #000;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         .font-pru-main { font-family: 'Playfair Display', serif; }
         .font-pru-accent { font-family: 'Cinzel', serif; letter-spacing: 0.05em; }
         
-        /* 16:9 比例容器 */
-        .tv-screen {
+        /* 铺满视口的容器 */
+        .app-maximizer {
             width: 100vw;
             height: 100vh;
-            position: relative;
+            position: fixed;
+            inset: 0;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
         /* 渐变背景 */
@@ -44,251 +50,222 @@
         .bg-sj { background: linear-gradient(135deg, #e6b980 0%, #eacda3 100%); }
 
         .card-pop { transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); cursor: pointer; }
-        .card-pop:hover { transform: scale(1.05); }
+        .card-pop:hover { transform: scale(1.03); }
 
         .hidden-panel { display: none !important; }
         
         @keyframes float {
             0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-15px); }
+            50% { transform: translateY(-12px); }
         }
         .float-anim { animation: float 4s ease-in-out infinite; }
 
-        .suku-kata-btn.active-correct { transform: scale(0.9); opacity: 0.2; pointer-events: none; }
+        .suku-kata-btn.active-correct { transform: scale(0.9); opacity: 0.15; pointer-events: none; }
         
-        /* 巨型横屏文字：针对 16:9 电视优化 */
+        /* 电视巨型文字：核心内容大小 */
         .giant-text { 
-            font-size: min(18vw, 35vh); 
-            line-height: 0.9; 
+            font-size: min(16vw, 32vh); 
+            line-height: 0.95; 
             font-weight: 900; 
-            text-shadow: 0 15px 45px rgba(0,0,0,0.15);
-            word-break: break-all;
+            text-shadow: 0 12px 36px rgba(0,0,0,0.12);
         }
         .sub-giant-text { 
-            font-size: min(8vw, 15vh); 
+            font-size: min(7vw, 13vh); 
             font-weight: 700; 
-            opacity: 0.8;
+            opacity: 0.75;
             margin-bottom: 1.5rem;
-            letter-spacing: -0.02em;
         }
 
         /* 四角交互控制按钮 */
         .control-btn {
-            background: rgba(255, 255, 255, 0.96);
-            backdrop-filter: blur(12px);
-            padding: 1.8vh 3.5vw;
-            border-radius: 2.5rem;
+            background: rgba(255, 255, 255, 0.94);
+            backdrop-filter: blur(10px);
+            padding: 1.4vh 3.2vw;
+            border-radius: 2rem;
             font-weight: 900;
-            font-size: 2.2vh; /* 根据高度自适应 */
-            box-shadow: 0 15px 40px rgba(0,0,0,0.12);
+            font-size: 2vh;
+            box-shadow: 0 12px 28px rgba(0,0,0,0.14);
             transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            border: 3px solid white;
+            border: 2px solid white;
             white-space: nowrap;
         }
         .control-btn:active { transform: scale(0.9); }
-        .control-btn:hover { background: white; transform: translateY(-5px); }
+        .control-btn:hover { background: white; transform: translateY(-4px); }
 
-        /* 电视专用安全角位：绝对定位防“吃屏” */
-        .tv-corner {
-            position: absolute;
-            z-index: 100;
-        }
+        /* 四角定位系统 */
+        .tv-corner { position: absolute; z-index: 50; }
         .top-l { top: var(--tv-safe-gap); left: var(--tv-safe-gap); }
         .top-r { top: var(--tv-safe-gap); right: var(--tv-safe-gap); }
         .bottom-l { bottom: var(--tv-safe-gap); left: var(--tv-safe-gap); }
         .bottom-r { bottom: var(--tv-safe-gap); right: var(--tv-safe-gap); }
         .top-center { top: var(--tv-safe-gap); left: 50%; transform: translateX(-50%); }
 
-        /* AI 助手面板样式 */
+        /* AI 加载旋转 */
         .spinner {
-            border: 5px solid rgba(0, 0, 0, 0.1);
-            border-top: 5px solid #d97706;
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-top: 4px solid #d97706;
             border-radius: 50%;
-            width: 50px;
-            height: 50px;
+            width: 44px;
+            height: 44px;
             animation: spin 1s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        /* 针对横屏的九宫格高度适配 */
-        #subject-grid {
-            height: 70vh;
-        }
 
         @media print {
             @page { size: A4 portrait; margin: 2cm; }
             body * { visibility: hidden; }
             #print-section, #print-section * { visibility: visible; }
-            #print-section { position: absolute; left: 0; top: 0; width: 100%; display: block !important; }
+            #print-section { position: absolute; left: 0; top: 0; width: 100%; display: block !important; background: white; }
         }
     </style>
 </head>
 <body class="bg-home">
 
-    <div class="tv-screen">
-        <!-- 第一页：封面 (16:9 横屏展示) -->
-        <div id="landing-page" class="h-full flex flex-col items-center justify-center text-center p-10 fade-in">
-            <div class="bg-white/30 backdrop-blur-xl p-16 rounded-[5rem] shadow-2xl border-4 border-white/50 max-w-6xl w-full flex flex-row items-center gap-20">
-                <img src="LOGO SEKOLAH.PNG" alt="校徽" class="h-[40vh] w-auto drop-shadow-2xl float-anim" onerror="this.src='LOGO SEKOLAH.jpg'">
-                <div class="text-left">
+    <div class="app-maximizer">
+        <!-- 第一页：封面 -->
+        <div id="landing-page" class="h-full w-full flex flex-col items-center justify-center text-center p-10 fade-in">
+            <div class="bg-white/30 backdrop-blur-xl p-16 rounded-[4rem] shadow-2xl border-4 border-white/50 max-w-6xl w-full flex flex-row items-center gap-16">
+                <img src="LOGO SEKOLAH.png" alt="校徽" class="h-[45vh] w-auto drop-shadow-2xl float-anim">
+                <div class="text-left flex-1">
                     <h2 class="text-5xl font-bold text-blue-900 mb-6 tracking-tight">实巴荷中山学校</h2>
-                    <h1 class="text-5xl font-pru-main text-gray-800 font-bold mb-4">Programme Remember & Understand</h1>
-                    <h1 class="text-9xl font-pru-accent text-blue-950 font-black tracking-tighter mb-10">(PRU)</h1>
-                    <button onclick="enterSystem()" class="bg-blue-600 text-white px-24 py-8 rounded-full text-5xl font-black shadow-2xl hover:bg-blue-700 transition-all hover:scale-105 active:scale-95">开始闯关</button>
+                    <div class="mb-10">
+                        <h1 class="text-5xl font-pru-main text-gray-800 font-bold mb-3 leading-tight">Programme Remember & Understand</h1>
+                        <h1 class="text-9xl font-pru-accent text-blue-950 font-black tracking-tighter">(PRU)</h1>
+                    </div>
+                    <button onclick="enterSystem()" class="bg-blue-600 text-white px-20 py-8 rounded-full text-5xl font-black shadow-2xl hover:bg-blue-700 transition-all hover:scale-105 active:scale-95">进入闯关</button>
+                    <div class="mt-8 text-gray-500 font-bold opacity-60">制作：zfkong</div>
                 </div>
             </div>
         </div>
 
         <!-- 第二页：科目选择 -->
-        <div id="subject-menu" class="hidden-panel h-full w-full p-16 fade-in flex flex-col relative">
-            <!-- 顶部导航 -->
+        <div id="subject-menu" class="hidden-panel h-full w-full p-12 fade-in flex flex-col relative">
             <div class="flex items-center justify-between mb-8">
-                <h3 class="text-2xl font-pru-accent font-bold text-gray-700 tracking-[0.5em] uppercase">Remember & Understand</h3>
-                <button id="nav-back-home" onclick="backToLanding()" class="bg-white/80 px-10 py-5 rounded-3xl font-black text-2xl shadow-xl flex items-center gap-4 hover:bg-white transition-all">
+                <h3 class="text-xl font-pru-accent font-bold text-gray-600 tracking-[0.5em] uppercase">Remember & Understand</h3>
+                <button id="nav-back-home" onclick="backToLanding()" class="bg-white/80 px-10 py-5 rounded-3xl font-black text-2xl shadow-xl hover:bg-white transition flex items-center gap-3">
                     🏠 <span>返回首页</span>
                 </button>
             </div>
 
-            <!-- 横向九宫格 -->
-            <div id="subject-grid" class="grid grid-cols-3 gap-10 max-w-[95%] mx-auto flex-1 items-center">
-                <div onclick="selectSubject('BM')" class="card-pop bg-orange-400 p-10 rounded-[3rem] text-white text-center shadow-2xl border-4 border-white/40 h-full flex flex-col justify-center">
+            <!-- 科目网格 -->
+            <div id="subject-grid" class="grid grid-cols-3 gap-8 max-w-[95%] mx-auto flex-1 items-center pb-20">
+                <div onclick="selectSubject('BM')" class="card-pop bg-orange-400 p-10 rounded-[3.5rem] text-white text-center shadow-2xl border-4 border-white/40 flex flex-col justify-center">
                     <div class="text-8xl mb-4">🌳</div>
                     <div class="text-4xl font-black mb-1">国语</div>
-                    <div class="text-xl opacity-90 font-bold uppercase">Bahasa Melayu</div>
+                    <div class="text-xl opacity-90 font-bold uppercase tracking-widest">Bahasa Melayu</div>
                 </div>
-                <div onclick="selectSubject('BC')" class="card-pop bg-red-500 p-10 rounded-[3rem] text-white text-center shadow-2xl border-4 border-white/40 h-full flex flex-col justify-center">
+                <div onclick="selectSubject('BC')" class="card-pop bg-red-500 p-10 rounded-[3.5rem] text-white text-center shadow-2xl border-4 border-white/40 flex flex-col justify-center">
                     <div class="text-8xl mb-4">🏮</div>
                     <div class="text-4xl font-black mb-1">华语</div>
-                    <div class="text-xl opacity-90 font-bold uppercase">Bahasa Cina</div>
+                    <div class="text-xl opacity-90 font-bold uppercase tracking-widest">Bahasa Cina</div>
                 </div>
-                <div onclick="selectSubject('BI')" class="card-pop bg-blue-500 p-10 rounded-[3rem] text-white text-center shadow-2xl border-4 border-white/40 h-full flex flex-col justify-center">
+                <div onclick="selectSubject('BI')" class="card-pop bg-blue-500 p-10 rounded-[3.5rem] text-white text-center shadow-2xl border-4 border-white/40 flex flex-col justify-center">
                     <div class="text-8xl mb-4">🚀</div>
                     <div class="text-4xl font-black mb-1">英语</div>
-                    <div class="text-xl opacity-90 font-bold uppercase">Bahasa Inggeris</div>
+                    <div class="text-xl opacity-90 font-bold uppercase tracking-widest">Bahasa Inggeris</div>
                 </div>
-                <div onclick="selectSubject('MT')" class="card-pop bg-purple-600 p-10 rounded-[3rem] text-white text-center shadow-2xl border-4 border-white/40 h-full flex flex-col justify-center">
+                <div onclick="selectSubject('MT')" class="card-pop bg-purple-600 p-10 rounded-[3.5rem] text-white text-center shadow-2xl border-4 border-white/40 flex flex-col justify-center">
                     <div class="text-8xl mb-4">🧪</div>
                     <div class="text-4xl font-black mb-1">数学</div>
-                    <div class="text-xl opacity-90 font-bold uppercase">Matematik</div>
+                    <div class="text-xl opacity-90 font-bold uppercase tracking-widest">Matematik</div>
                 </div>
-                <div onclick="selectSubject('SC')" class="card-pop bg-green-500 p-10 rounded-[3rem] text-white text-center shadow-2xl border-4 border-white/40 h-full flex flex-col justify-center">
+                <div onclick="selectSubject('SC')" class="card-pop bg-green-500 p-10 rounded-[3.5rem] text-white text-center shadow-2xl border-4 border-white/40 flex flex-col justify-center">
                     <div class="text-8xl mb-4">🔬</div>
                     <div class="text-4xl font-black mb-1">科学</div>
-                    <div class="text-xl opacity-90 font-bold uppercase">Sains</div>
+                    <div class="text-xl opacity-90 font-bold uppercase tracking-widest">Sains</div>
                 </div>
-                <div onclick="selectSubject('SJ')" class="card-pop bg-yellow-700 p-10 rounded-[3rem] text-white text-center shadow-2xl border-4 border-white/40 h-full flex flex-col justify-center">
+                <div onclick="selectSubject('SJ')" class="card-pop bg-yellow-700 p-10 rounded-[3.5rem] text-white text-center shadow-2xl border-4 border-white/40 flex flex-col justify-center">
                     <div class="text-8xl mb-4">🏛️</div>
                     <div class="text-4xl font-black mb-1">历史</div>
-                    <div class="text-xl opacity-90 font-bold uppercase">Sejarah</div>
+                    <div class="text-xl opacity-90 font-bold uppercase tracking-widest">Sejarah</div>
                 </div>
             </div>
 
-            <!-- 单元选择面板 -->
+            <!-- 单元选择 -->
             <div id="folder-selection" class="hidden-panel max-w-7xl mx-auto bg-white/40 backdrop-blur-3xl p-12 rounded-[5rem] shadow-2xl border-4 border-white/50 flex-1 flex flex-col overflow-hidden">
                 <div class="flex items-center justify-between mb-8">
                     <div class="flex items-center gap-10">
                         <button id="nav-back-subject" onclick="showSubjectMenu()" class="bg-white p-8 rounded-full shadow-2xl hover:scale-105 transition text-4xl">⬅️</button>
-                        <h2 id="folder-view-title" class="text-6xl font-black text-gray-800 tracking-tighter">选择单元</h2>
+                        <h2 id="folder-view-title" class="text-6xl font-black text-gray-800 tracking-tighter">Pilih Unit</h2>
                     </div>
-                    <div class="flex items-center gap-10">
+                    <div class="flex items-center gap-8">
                         <div class="mode-toggle">
-                            <button id="mode-quiz-btn" onclick="setMode('quiz')" class="mode-btn active">Cabaran</button>
-                            <button id="mode-study-btn" onclick="setMode('study')" class="mode-btn">Belajar</button>
+                            <button id="mode-quiz-btn" onclick="setMode('quiz')" class="mode-btn active">闯关</button>
+                            <button id="mode-study-btn" onclick="setMode('study')" class="mode-btn">学习</button>
                         </div>
-                        <button id="global-print-btn" onclick="openPrintPreview()" class="hidden-panel bg-white px-10 py-4 rounded-full shadow-2xl font-black text-blue-600 border-2 border-blue-100 hover:scale-105 transition flex items-center gap-4 text-2xl">
+                        <button id="global-print-btn" onclick="openPrintPreview()" class="hidden-panel bg-white px-10 py-4 rounded-full shadow-xl font-black text-blue-600 border-2 border-blue-100 hover:scale-105 transition flex items-center gap-3 text-2xl">
                             🖨️ <span id="print-btn-text">Simpan PDF (A4)</span>
                         </button>
                     </div>
                 </div>
-                <div id="folder-grid" class="grid grid-cols-4 gap-8 overflow-y-auto pr-4 pb-10"></div>
+                <div id="folder-grid" class="grid grid-cols-4 gap-8 overflow-y-auto pr-2 pb-8"></div>
             </div>
 
             <div id="manager-btn-container" class="absolute bottom-10 left-0 w-full flex justify-center no-print">
-                <button onclick="toggleManager()" class="bg-gray-900 text-white px-16 py-6 rounded-full hover:bg-black transition shadow-2xl font-black text-2xl">⚙️ 内容管理中心</button>
+                <button onclick="toggleManager()" class="bg-gray-900 text-white px-14 py-5 rounded-full hover:bg-black transition shadow-2xl font-black text-2xl">⚙️ 内容管理中心</button>
             </div>
         </div>
 
-        <!-- 游戏：16:9 四角定位模式 -->
+        <!-- 游戏舞台 -->
         <div id="game-container" class="hidden-panel fixed inset-0 z-50 flex flex-col bg-home overflow-hidden">
-            
-            <!-- 左上角：返回 -->
+            <!-- 四角 -->
             <div class="tv-corner top-l">
                 <button onclick="showSubjectMenu()" class="control-btn no-print">⬅ <span id="nav-back-folder-text">返回</span></button>
             </div>
-
-            <!-- 正上方：标题 -->
             <div class="tv-corner top-center pointer-events-none text-center">
                 <div id="game-title" class="text-4xl font-black text-white drop-shadow-2xl uppercase tracking-widest">科目</div>
-                <div class="text-xs font-pru-accent text-white/40 tracking-[1em] uppercase">Remember & Understand</div>
             </div>
-
-            <!-- 右上角：进度 -->
             <div class="tv-corner top-r">
                 <div class="control-btn bg-white/95 text-blue-800 min-w-[200px] text-center border-none">
                     <span id="progress-text" class="opacity-50 mr-4 text-lg uppercase font-bold tracking-tighter">Progres</span> 
-                    <span id="progress-val" class="text-4xl">0/0</span>
+                    <span id="progress-val" class="text-3xl">0/0</span>
                 </div>
             </div>
 
-            <!-- 巨型中央舞台 -->
-            <div id="game-stage" class="flex-1 w-full flex flex-col items-center justify-center px-24">
-                <!-- 动态内容 -->
-            </div>
+            <!-- 中央核心 -->
+            <div id="game-stage" class="flex-1 w-full flex flex-col items-center justify-center px-24"></div>
+            <div id="feedback" class="absolute bottom-[20%] left-0 w-full text-center text-7xl font-black text-white drop-shadow-lg transition-all duration-300"></div>
 
-            <!-- 反馈 -->
-            <div id="feedback" class="absolute bottom-[20%] left-0 w-full text-center text-7xl font-black text-white drop-shadow-[0_10px_25px_rgba(0,0,0,0.4)] transition-all duration-300"></div>
-
-            <!-- 左下角：朗读与 AI -->
-            <div class="tv-corner bottom-l no-print flex gap-6">
+            <div class="tv-corner bottom-l no-print flex gap-5">
                 <div id="speak-action-container" class="invisible">
-                    <button id="speak-btn" class="control-btn border-4 border-blue-400/30 text-blue-800">
-                        🔊 <span id="speak-btn-text">朗读</span>
-                    </button>
+                    <button id="speak-btn" class="control-btn border-4 border-blue-400/20 text-blue-800">🔊 <span id="speak-btn-text">朗读</span></button>
                 </div>
                 <div id="ai-study-action-container" class="invisible">
-                    <button id="ai-explain-btn" class="control-btn border-4 border-amber-400/30 text-amber-800 bg-amber-50">
-                        ✨ <span id="ai-btn-text">AI 解析</span>
-                    </button>
+                    <button id="ai-explain-btn" class="control-btn border-4 border-amber-400/20 text-amber-800 bg-amber-50">✨ <span id="ai-btn-text">AI 解析</span></button>
                 </div>
             </div>
-
-            <!-- 右下角：下一个 -->
             <div class="tv-corner bottom-r no-print">
                 <div id="next-action-container" class="invisible">
-                    <button id="next-btn" class="control-btn bg-blue-600 text-white border-none shadow-2xl">
-                        <span id="next-btn-text">下一个</span> ➔
-                    </button>
+                    <button id="next-btn" class="control-btn bg-blue-600 text-white border-none shadow-2xl"><span id="next-btn-text">下一个</span> ➔</button>
                 </div>
             </div>
         </div>
 
         <!-- AI 弹窗 -->
-        <div id="ai-assistant-modal" class="hidden-panel fixed inset-0 flex items-center justify-center p-12 fade-in">
-            <div class="bg-white/98 w-full max-w-6xl rounded-[5rem] p-16 shadow-2xl flex flex-col items-center text-center">
+        <div id="ai-assistant-modal" class="hidden-panel fixed inset-0 z-[100] flex items-center justify-center p-12 fade-in bg-black/80 backdrop-blur-sm">
+            <div class="bg-white w-full max-w-5xl rounded-[5rem] p-16 shadow-2xl flex flex-col items-center text-center">
                 <div class="text-8xl mb-8">✨</div>
-                <h3 class="text-5xl font-black text-amber-900 mb-8 tracking-tighter">AI 智能辅助解析</h3>
+                <h3 class="text-5xl font-black text-amber-900 mb-8 tracking-tighter">AI 智能辅助理解</h3>
                 <div id="ai-loading" class="flex flex-col items-center gap-6 py-10">
                     <div class="spinner"></div>
-                    <p class="text-3xl font-bold text-amber-800 animate-pulse">Gemini 正在深度构思中...</p>
+                    <p class="text-3xl font-bold text-amber-800 animate-pulse">正在生成解析...</p>
                 </div>
-                <div id="ai-content" class="text-4xl font-bold text-gray-700 leading-relaxed text-left w-full h-[45vh] overflow-y-auto px-10 hidden bg-amber-50/50 p-10 rounded-[3rem]">
-                    <!-- 内容 -->
-                </div>
-                <button onclick="closeAIModal()" class="mt-12 bg-amber-600 text-white px-24 py-8 rounded-3xl text-4xl font-black shadow-2xl hover:bg-amber-700 transition active:scale-95">理解了！</button>
+                <div id="ai-content" class="text-4xl font-bold text-gray-700 leading-relaxed text-left w-full h-[45vh] overflow-y-auto px-10 hidden bg-amber-50/30 p-10 rounded-[3rem]"></div>
+                <button onclick="closeAIModal()" class="mt-12 bg-amber-600 text-white px-24 py-8 rounded-3xl text-4xl font-black shadow-xl hover:bg-amber-700 transition">明白了</button>
             </div>
         </div>
 
         <!-- 管理中心 -->
-        <div id="manager-modal" class="hidden-panel fixed inset-0 z-[120] bg-black/85 backdrop-blur-lg flex items-center justify-center p-12">
+        <div id="manager-modal" class="hidden-panel fixed inset-0 z-[120] bg-black/85 backdrop-blur-lg flex items-center justify-center p-10">
             <div class="bg-white rounded-[4rem] w-full max-w-7xl max-h-[92vh] overflow-hidden flex flex-col shadow-2xl">
                 <div class="p-12 pb-6 flex justify-between items-start border-b">
-                    <div><h2 class="text-5xl font-black text-gray-800">内容管理中心</h2><p class="text-xl text-gray-500">维护 16:9 横屏专属教学内容</p></div>
+                    <div><h2 class="text-5xl font-black text-gray-800">内容管理中心</h2><p class="text-xl text-gray-500">更新科目单元数据</p></div>
                     <button onclick="toggleManager()" class="text-gray-300 hover:text-gray-600 text-7xl">&times;</button>
                 </div>
                 <div id="category-tabs" class="px-12 py-6 flex flex-wrap gap-4 bg-gray-50"></div>
-                <div class="flex-1 px-12 overflow-y-auto flex gap-12 py-10">
+                <div class="flex-1 px-12 overflow-y-auto flex gap-10 py-8">
                     <div class="w-1/3 border-r pr-8">
-                        <h3 class="font-black text-blue-600 mb-6 flex justify-between items-center text-2xl">单元列表 <button onclick="addFolder()" class="text-sm bg-blue-100 text-blue-600 px-6 py-3 rounded-2xl hover:bg-blue-200">+ 新增</button></h3>
+                        <h3 class="font-black text-blue-600 mb-6 flex justify-between items-center text-2xl">单元列表 <button onclick="addFolder()" class="text-sm bg-blue-100 text-blue-600 px-5 py-2 rounded-2xl">+ 新增</button></h3>
                         <div id="manager-folder-list" class="space-y-4"></div>
                     </div>
                     <div class="w-2/3">
@@ -310,11 +287,11 @@
             </div>
         </div>
 
-        <!-- 存档/PDF 预览 -->
+        <!-- PDF 存档 -->
         <div id="print-modal" class="hidden-panel fixed inset-0 z-[150] bg-black/90 backdrop-blur-md flex items-center justify-center p-12">
             <div class="bg-white w-full max-w-5xl rounded-[4rem] p-16 flex flex-col max-h-[90vh] shadow-2xl">
                 <div class="flex justify-between items-center mb-10">
-                    <h2 class="text-4xl font-black text-gray-800">🖨️ PDF 存档预览 (A4 Portrait)</h2>
+                    <h2 class="text-4xl font-black text-gray-800">🖨️ PDF 存档预览 (A4)</h2>
                     <button onclick="closePrintModal()" class="text-6xl text-gray-300 hover:text-gray-600 transition">&times;</button>
                 </div>
                 <div id="print-preview-content" class="flex-1 overflow-y-auto border-4 border-gray-100 rounded-[3rem] p-12 bg-gray-50"></div>
@@ -326,29 +303,24 @@
         </div>
     </div>
 
-    <!-- 隐藏的 PDF 打印容器 -->
+    <!-- 隐藏容器 -->
     <div id="print-section" class="hidden"></div>
     <div id="toast" class="fixed bottom-12 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-16 py-8 rounded-[2.5rem] shadow-2xl z-[200] font-black text-3xl opacity-0 transition-opacity duration-300 pointer-events-none">✅ 已保存</div>
 
     <script>
         // --- Gemini API ---
         const apiKey = ""; 
-        
+
         async function callGemini(prompt, systemInstruction = "你是专业的教育助手") {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
             const payload = {
                 contents: [{ parts: [{ text: prompt }] }],
                 systemInstruction: { parts: [{ text: systemInstruction }] }
             };
-
             let retries = 5, delay = 1000;
             for (let i = 0; i < retries; i++) {
                 try {
-                    const response = await fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
+                    const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                     if (!response.ok) throw new Error('API request failed');
                     const data = await response.json();
                     return data.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -360,7 +332,7 @@
             }
         }
 
-        // --- 数据与逻辑 ---
+        // --- 数据结构 ---
         let masterData = {
             'BM': [{ name: "Unit 1", content: "se-ko-lah,sekolah\nbu-ku,buku\nme-ja,meja" }],
             'BC': [{ name: "生词 A", content: "píng guǒ,苹果\nlǎo shī,老师\nxué xiào,学校" }],
@@ -381,113 +353,106 @@
 
         function getLocale() { return (currentSubject === 'BM') ? locales['BM'] : (currentSubject === 'BI' ? locales['BI'] : locales['CN']); }
 
-        // --- 核心控制 ---
+        // --- 导航控制 ---
         function enterSystem() { 
-            document.getElementById('landing-page').classList.add('hidden-panel'); 
-            document.getElementById('subject-menu').classList.remove('hidden-panel'); 
+            const landing = document.getElementById('landing-page'), menu = document.getElementById('subject-menu');
+            if (landing) landing.classList.add('hidden-panel'); 
+            if (menu) menu.classList.remove('hidden-panel'); 
             showSubjectMenu(); 
         }
 
         function backToLanding() { 
-            document.getElementById('landing-page').classList.remove('hidden-panel'); 
-            document.getElementById('subject-menu').classList.add('hidden-panel'); 
-            document.getElementById('game-container').classList.add('hidden-panel'); 
+            const landing = document.getElementById('landing-page'), menu = document.getElementById('subject-menu'), game = document.getElementById('game-container');
+            if (landing) landing.classList.remove('hidden-panel'); 
+            if (menu) menu.classList.add('hidden-panel'); 
+            if (game) game.classList.add('hidden-panel'); 
             document.body.className = 'bg-home'; 
         }
 
         function showSubjectMenu() {
-            document.getElementById('subject-menu').classList.remove('hidden-panel');
-            document.getElementById('subject-grid').classList.remove('hidden-panel');
-            document.getElementById('folder-selection').classList.add('hidden-panel');
-            document.getElementById('game-container').classList.add('hidden-panel');
-            document.getElementById('manager-btn-container').classList.remove('hidden-panel');
+            const menu = document.getElementById('subject-menu'), grid = document.getElementById('subject-grid'), sel = document.getElementById('folder-selection'), game = document.getElementById('game-container'), mBtn = document.getElementById('manager-btn-container');
+            if (menu) menu.classList.remove('hidden-panel');
+            if (grid) grid.classList.remove('hidden-panel');
+            if (sel) sel.classList.add('hidden-panel');
+            if (game) game.classList.add('hidden-panel');
+            if (mBtn) mBtn.classList.remove('hidden-panel');
             document.body.className = 'bg-home';
         }
 
         function setMode(mode) {
             currentMode = mode;
-            document.getElementById('mode-quiz-btn').classList.toggle('active', mode === 'quiz');
-            document.getElementById('mode-study-btn').classList.toggle('active', mode === 'study');
+            const qBtn = document.getElementById('mode-quiz-btn'), sBtn = document.getElementById('mode-study-btn');
+            if (qBtn) qBtn.classList.toggle('active', mode === 'quiz');
+            if (sBtn) sBtn.classList.toggle('active', mode === 'study');
         }
 
         function selectSubject(sub) {
             currentSubject = sub; const loc = getLocale();
-            const bh = document.getElementById('nav-back-home');
-            if (bh && bh.querySelector('span')) bh.querySelector('span').innerText = loc.backHome;
-
-            document.getElementById('subject-grid').classList.add('hidden-panel');
-            document.getElementById('folder-selection').classList.remove('hidden-panel');
-            document.getElementById('manager-btn-container').classList.add('hidden-panel');
-            document.getElementById('folder-view-title').innerText = loc.selectUnit;
-            document.getElementById('mode-quiz-btn').innerText = loc.quizMode;
-            document.getElementById('mode-study-btn').innerText = loc.studyMode;
-            document.getElementById('print-btn-text').innerText = loc.printBtn;
+            const bh = document.getElementById('nav-back-home'), grid = document.getElementById('subject-grid'), sel = document.getElementById('folder-selection'), mBtn = document.getElementById('manager-btn-container');
+            const title = document.getElementById('folder-view-title'), qb = document.getElementById('mode-quiz-btn'), sb = document.getElementById('mode-study-btn'), pb = document.getElementById('print-btn-text');
             
-            const grid = document.getElementById('folder-grid'); 
-            grid.innerHTML = '';
-            masterData[sub].forEach((folder, idx) => {
-                const btn = document.createElement('div');
-                btn.className = "card-pop bg-white p-12 rounded-[3.5rem] shadow-2xl border-4 border-gray-100 text-center font-black text-4xl text-gray-700 flex flex-col justify-between h-72";
-                btn.innerHTML = `<span class="mt-4">${folder.name}</span>`;
-                btn.onclick = () => { 
-                    currentFolderIdx = idx;
-                    document.querySelectorAll('#folder-grid > div').forEach(d => d.classList.remove('border-blue-500', 'bg-blue-50'));
-                    btn.classList.add('border-blue-500', 'bg-blue-50');
-                    document.getElementById('global-print-btn').classList.remove('hidden-panel');
-                    btn.ondblclick = () => startGame(idx);
-                };
-                const play = document.createElement('div');
-                play.className = "text-xl bg-blue-600 text-white py-4 rounded-[1.5rem] uppercase tracking-widest font-black";
-                play.innerText = (sub === 'BM' || sub === 'BI') ? "START" : "开始";
-                play.onclick = (e) => { e.stopPropagation(); startGame(idx); };
-                btn.appendChild(play); grid.appendChild(btn);
-            });
+            if (bh && bh.querySelector('span')) bh.querySelector('span').innerText = loc.backHome;
+            if (grid) grid.classList.add('hidden-panel');
+            if (sel) sel.classList.remove('hidden-panel');
+            if (mBtn) mBtn.classList.add('hidden-panel');
+            if (title) title.innerText = loc.selectUnit;
+            if (qb) qb.innerText = loc.quizMode;
+            if (sb) sb.innerText = loc.studyMode;
+            if (pb) pb.innerText = loc.printBtn;
+            
+            const fGrid = document.getElementById('folder-grid'); 
+            if (fGrid) {
+                fGrid.innerHTML = '';
+                masterData[sub].forEach((folder, idx) => {
+                    const btn = document.createElement('div');
+                    btn.className = "card-pop bg-white p-12 rounded-[3.5rem] shadow-2xl border-4 border-gray-100 text-center font-black text-4xl text-gray-700 flex flex-col justify-between h-72";
+                    btn.innerHTML = `<span class="mt-4">${folder.name}</span>`;
+                    btn.onclick = () => { 
+                        currentFolderIdx = idx;
+                        document.querySelectorAll('#folder-grid > div').forEach(d => d.classList.remove('border-blue-500', 'bg-blue-50'));
+                        btn.classList.add('border-blue-500', 'bg-blue-50');
+                        const gpb = document.getElementById('global-print-btn');
+                        if (gpb) gpb.classList.remove('hidden-panel');
+                        btn.ondblclick = () => startGame(idx);
+                    };
+                    const play = document.createElement('div');
+                    play.className = "text-xl bg-blue-600 text-white py-4 rounded-2xl uppercase tracking-widest font-black";
+                    play.innerText = (sub === 'BM' || sub === 'BI') ? "START" : "开始";
+                    play.onclick = (e) => { e.stopPropagation(); startGame(idx); };
+                    btn.appendChild(play); fGrid.appendChild(btn);
+                });
+            }
         }
 
         function startGame(idx) {
             currentFolderIdx = idx; correctCount = 0; playedIndices = []; const loc = getLocale();
-            document.getElementById('subject-menu').classList.add('hidden-panel');
-            document.getElementById('game-container').classList.remove('hidden-panel');
+            const m = document.getElementById('subject-menu'), g = document.getElementById('game-container'), t = document.getElementById('game-title'), bt = document.getElementById('nav-back-folder-text'), pt = document.getElementById('progress-text'), st = document.getElementById('speak-btn-text'), nt = document.getElementById('next-btn-text'), at = document.getElementById('ai-btn-text');
+            if (m) m.classList.add('hidden-panel');
+            if (g) g.classList.remove('hidden-panel');
             document.body.className = `bg-${currentSubject.toLowerCase()}`;
-            document.getElementById('game-title').innerText = getGameName(currentSubject);
-            document.getElementById('nav-back-folder-text').innerText = loc.backFolder;
-            document.getElementById('progress-text').innerText = loc.progress;
-            document.getElementById('speak-btn-text').innerText = loc.speakBtn;
-            document.getElementById('next-btn-text').innerText = loc.nextBtn;
-            document.getElementById('ai-btn-text').innerText = loc.aiBtn || "AI 解析";
+            if (t) t.innerText = getGameName(currentSubject);
+            if (bt) bt.innerText = loc.backFolder;
+            if (pt) pt.innerText = loc.progress;
+            if (st) st.innerText = loc.speakBtn;
+            if (nt) nt.innerText = loc.nextBtn;
+            if (at) at.innerText = loc.aiBtn || "AI 解析";
             renderLevel();
         }
 
         function getGameName(sub) { return {'BM':'Bahasa Melayu','BC':'Bahasa Cina','BI':'Bahasa Inggeris','MT':'Matematik','SC':'Sains','SJ':'Sejarah'}[sub]; }
 
-        // --- 核心渲染引擎 (16:9 锁定版) ---
+        // --- 渲染逻辑 ---
         function renderLevel() {
-            const stage = document.getElementById('game-stage');
-            const sAct = document.getElementById('speak-action-container');
-            const aiAct = document.getElementById('ai-study-action-container');
-            const nAct = document.getElementById('next-action-container');
-            
+            const stage = document.getElementById('game-stage'), fb = document.getElementById('feedback'), sa = document.getElementById('speak-action-container'), aa = document.getElementById('ai-study-action-container'), na = document.getElementById('next-action-container'), pv = document.getElementById('progress-val');
             if (!stage) return;
-            stage.innerHTML = ''; isFirstAttempt = true; 
-            document.getElementById('feedback').innerText = '';
-            
-            if (sAct) sAct.className = 'invisible';
-            if (aiAct) aiAct.className = 'invisible';
-            if (nAct) nAct.className = 'invisible';
+            stage.innerHTML = ''; if (fb) fb.innerText = ''; isFirstAttempt = true; 
+            if (sa) sa.className = 'invisible'; if (aa) aa.className = 'invisible'; if (na) na.className = 'invisible';
 
-            const folder = masterData[currentSubject][currentFolderIdx];
-            const raw = folder.content.split('\n').filter(line => line.trim().includes(','));
-            const total = raw.length;
-            
+            const folder = masterData[currentSubject][currentFolderIdx], raw = folder.content.split('\n').filter(l => l.trim().includes(',')), total = raw.length;
             if (playedIndices.length >= total) { renderGameComplete(total); return; }
-            document.getElementById('progress-val').innerText = `${playedIndices.length + 1}/${total}`;
+            if (pv) pv.innerText = `${playedIndices.length + 1}/${total}`;
 
-            let nextIdx;
-            if (currentMode === 'study') nextIdx = playedIndices.length;
-            else {
-                let av = []; for(let i=0; i<total; i++) if(!playedIndices.includes(i)) av.push(i);
-                nextIdx = av[Math.floor(Math.random()*av.length)];
-            }
+            let nextIdx = (currentMode === 'study') ? playedIndices.length : (() => { let av = []; for(let i=0; i<total; i++) if(!playedIndices.includes(i)) av.push(i); return av[Math.floor(Math.random()*av.length)]; })();
             const [q, a] = raw[nextIdx].split(',').map(s => s.trim());
             lastStudyWord = { q, a };
 
@@ -503,35 +468,32 @@
         }
 
         function renderStudyView(q, a) {
-            const stage = document.getElementById('game-stage');
-            let html = '', text = '', lang = 'zh-CN';
-            if (currentSubject === 'BC') { html = `<div class="sub-giant-text text-white/50">${q}</div><div class="giant-text text-white">${a}</div>`; text = a; }
-            else if (currentSubject === 'MT') { html = `<div class="giant-text text-white">${q} = ${a}</div>`; text = `${q} 等于 ${a}`; }
-            else if (currentSubject === 'BM') { html = `<div class="sub-giant-text text-white/50 uppercase">${q}</div><div class="giant-text text-white uppercase">${a}</div>`; text = a; lang = 'ms-MY'; }
-            else if (currentSubject === 'BI') { html = `<div class="giant-text text-white uppercase">${q}</div><div class="sub-giant-text text-white/50 uppercase">${a}</div>`; text = q; lang = 'en-SG'; }
-            else { html = `<div class="giant-text text-white uppercase">${q}</div><div class="sub-giant-text text-white/50 uppercase">${a}</div>`; text = q; }
-            
-            stage.innerHTML = `<div class="animate-score text-center">${html}</div>`;
-            document.getElementById('speak-action-container').className = 'visible';
-            document.getElementById('ai-study-action-container').className = 'visible';
-            document.getElementById('next-action-container').className = 'visible';
-            document.getElementById('speak-btn').onclick = () => speak(text, lang);
-            document.getElementById('ai-explain-btn').onclick = () => showAIExplain();
-            document.getElementById('next-btn').onclick = () => { playedIndices.push(playedIndices.length); renderLevel(); };
-            setTimeout(() => speak(text, lang), 400);
+            const s = document.getElementById('game-stage'), sa = document.getElementById('speak-action-container'), aa = document.getElementById('ai-study-action-container'), na = document.getElementById('next-action-container'), sb = document.getElementById('speak-btn'), ab = document.getElementById('ai-explain-btn'), nb = document.getElementById('next-btn');
+            let h = '', t = '', l = 'zh-CN';
+            if (currentSubject === 'BC') { h = `<div class="sub-giant-text text-white/50">${q}</div><div class="giant-text text-white">${a}</div>`; t = a; }
+            else if (currentSubject === 'MT') { h = `<div class="giant-text text-white">${q} = ${a}</div>`; t = `${q} 等于 ${a}`; }
+            else if (currentSubject === 'BM') { h = `<div class="sub-giant-text text-white/50 uppercase">${q}</div><div class="giant-text text-white uppercase">${a}</div>`; t = a; l = 'ms-MY'; }
+            else if (currentSubject === 'BI') { h = `<div class="giant-text text-white uppercase">${q}</div><div class="sub-giant-text text-white/50 uppercase">${a}</div>`; t = q; l = 'en-SG'; }
+            else { h = `<div class="giant-text text-white uppercase">${q}</div><div class="sub-giant-text text-white/50 uppercase">${a}</div>`; t = q; }
+            if (s) s.innerHTML = `<div class="animate-score text-center">${h}</div>`;
+            if (sa) sa.className = 'visible'; if (aa) aa.className = 'visible'; if (na) na.className = 'visible';
+            if (sb) sb.onclick = () => speak(t, l);
+            if (ab) ab.onclick = () => showAIExplain();
+            if (nb) nb.onclick = () => { playedIndices.push(playedIndices.length); renderLevel(); };
+            setTimeout(() => speak(t, l), 400);
         }
 
         function renderBMLevel(suku, full) {
-            const stage = document.getElementById('game-stage');
+            const stage = document.getElementById('game-stage'), sa = document.getElementById('speak-action-container'), sb = document.getElementById('speak-btn');
             let step = 0; const parts = suku.split('-');
             const reveal = document.createElement('div');
             reveal.className = "giant-text flex gap-12 opacity-0 transition-all duration-500 mb-20 justify-center";
             parts.forEach((p, i) => { const s = document.createElement('span'); s.className = sukuColors[i % 5]; s.innerText = p.toUpperCase(); reveal.appendChild(s); });
-            stage.appendChild(reveal);
+            if (stage) stage.appendChild(reveal);
             const box = document.createElement('div'); box.className = "flex gap-12 flex-wrap justify-center";
             [...parts].sort(() => Math.random()-0.5).forEach(p => {
                 const b = document.createElement('button');
-                b.className = `px-20 py-12 rounded-[4rem] text-[10rem] font-black shadow-2xl bg-white border-8 border-white active:scale-90 transition ${sukuColors[parts.indexOf(p)%5]}`;
+                b.className = `px-20 py-12 rounded-[4.5rem] text-[10rem] font-black shadow-2xl bg-white border-8 border-white active:scale-90 transition ${sukuColors[parts.indexOf(p)%5]}`;
                 b.innerText = p.toLowerCase();
                 b.onclick = () => {
                     if (p === parts[step]) { b.classList.add('active-correct'); step++; if(step === parts.length) { reveal.classList.remove('opacity-0'); if(isFirstAttempt) correctCount++; showFeedback(true); setTimeout(renderLevel, 2000); } }
@@ -539,97 +501,86 @@
                 };
                 box.appendChild(b);
             });
-            stage.appendChild(box);
-            document.getElementById('speak-action-container').className = 'visible';
-            document.getElementById('speak-btn').onclick = () => speak(full, 'ms-MY');
+            if (stage) stage.appendChild(box);
+            if (sa) sa.className = 'visible'; if (sb) sb.onclick = () => speak(full, 'ms-MY');
             setTimeout(() => speak(full, 'ms-MY'), 500);
         }
 
         function renderBCLevel(pin, han, raw) {
-            const stage = document.getElementById('game-stage');
-            stage.innerHTML = `<div class="sub-giant-text text-white/50 mb-10 uppercase tracking-widest">${pin}</div>`;
+            const stage = document.getElementById('game-stage'), sa = document.getElementById('speak-action-container'), sb = document.getElementById('speak-btn');
+            if (stage) stage.innerHTML = `<div class="sub-giant-text text-white/50 mb-10 uppercase tracking-widest">${pin}</div>`;
             const grid = document.createElement('div'); grid.className = "grid grid-cols-2 gap-20 w-full max-w-[85vw]";
             let opts = [han]; while(opts.length < 2) { let r = raw[Math.floor(Math.random()*raw.length)].split(',')[1].trim(); if(!opts.includes(r)) opts.push(r); }
             opts.sort(()=>Math.random()-0.5).forEach(o => {
-                const b = document.createElement('button'); b.className = "bg-white p-20 rounded-[5rem] text-[22rem] font-black shadow-2xl border-8 border-white/40 active:scale-95 transition leading-none";
+                const b = document.createElement('button'); b.className = "bg-white p-20 rounded-[6rem] text-[22rem] font-black shadow-2xl border-8 border-white/40 active:scale-95 transition leading-none";
                 b.innerText = o; b.onclick = () => checkResult(o === han); grid.appendChild(b);
             });
-            stage.appendChild(grid);
-            document.getElementById('speak-action-container').className = 'visible';
-            document.getElementById('speak-btn').onclick = () => speak(han, 'zh-CN');
+            if (stage) stage.appendChild(grid);
+            if (sa) sa.className = 'visible'; if (sb) sb.onclick = () => speak(han, 'zh-CN');
             setTimeout(()=>speak(han,'zh-CN'), 500);
         }
 
         function renderBILevel(word, mean) {
-            const stage = document.getElementById('game-stage');
-            stage.innerHTML = `<div class="sub-giant-text text-white/40 italic mb-10 font-bold uppercase tracking-widest">(${mean})</div>`;
+            const stage = document.getElementById('game-stage'), sa = document.getElementById('speak-action-container'), sb = document.getElementById('speak-btn');
+            if (stage) stage.innerHTML = `<div class="sub-giant-text text-white/40 italic mb-10 font-bold uppercase tracking-widest">(${mean})</div>`;
             const grid = document.createElement('div'); grid.className = "grid grid-cols-2 gap-20 w-full max-w-[85vw]";
             let dist = word.length > 3 ? word.slice(0,-1) : word+word.slice(-1);
             let opts = [word, dist].sort(()=>Math.random()-0.5);
             opts.forEach(o => {
-                const b = document.createElement('button'); b.className = "bg-white p-20 rounded-[5rem] text-[18rem] font-black shadow-2xl border-8 border-white/40 active:scale-95 transition uppercase leading-none";
+                const b = document.createElement('button'); b.className = "bg-white p-20 rounded-[6rem] text-[18rem] font-black shadow-2xl border-8 border-white/40 active:scale-95 transition uppercase leading-none";
                 b.innerText = o; b.onclick = () => checkResult(o === word); grid.appendChild(b);
             });
-            stage.appendChild(grid);
-            document.getElementById('speak-action-container').className = 'visible';
-            document.getElementById('speak-btn').onclick = () => speak(word, 'en-SG');
+            if (stage) stage.appendChild(grid);
+            if (sa) sa.className = 'visible'; if (sb) sb.onclick = () => speak(word, 'en-SG');
             setTimeout(()=>speak(word,'en-SG'), 500);
         }
 
         function renderMTLevel(q, a) {
             const stage = document.getElementById('game-stage');
-            stage.innerHTML = `<div class="giant-text text-white mb-24 drop-shadow-2xl">${q} = ?</div>`;
+            if (stage) stage.innerHTML = `<div class="giant-text text-white drop-shadow-2xl mb-24">${q} = ?</div>`;
             const grid = document.createElement('div'); grid.className = "grid grid-cols-2 gap-16 w-full max-w-[70vw]";
             let opts = [a]; while(opts.length < 4) { let r = Math.floor(Math.random()*100).toString(); if(!opts.includes(r)) opts.push(r); }
             opts.sort(()=>Math.random()-0.5).forEach(o => {
-                const b = document.createElement('button'); b.className = "bg-white p-16 rounded-[4rem] text-[12rem] font-black shadow-2xl active:scale-90 transition leading-none";
+                const b = document.createElement('button'); b.className = "bg-white p-16 rounded-[5rem] text-[12rem] font-black shadow-2xl active:scale-90 transition leading-none";
                 b.innerText = o; b.onclick = () => checkResult(o === a); grid.appendChild(b);
             });
-            stage.appendChild(grid);
+            if (stage) stage.appendChild(grid);
         }
 
         function renderStandardLevel(q, a, raw) {
             const stage = document.getElementById('game-stage');
-            stage.innerHTML = `<div class="giant-text text-white mb-20 drop-shadow-2xl">${q} = ?</div>`;
+            if (stage) stage.innerHTML = `<div class="giant-text text-white mb-20 drop-shadow-2xl">${q} = ?</div>`;
             const grid = document.createElement('div'); grid.className = "grid grid-cols-2 gap-16 w-full max-w-[85vw]";
             let opts = [a]; while(opts.length < 4) { let r = raw[Math.floor(Math.random()*raw.length)].split(',')[1].trim(); if(!opts.includes(r)) opts.push(r); }
             opts.sort(()=>Math.random()-0.5).forEach(o => {
-                const b = document.createElement('button'); b.className = "bg-white p-14 rounded-[4rem] text-[10rem] font-black shadow-2xl active:scale-90 transition leading-none";
+                const b = document.createElement('button'); b.className = "bg-white p-14 rounded-[5rem] text-[10rem] font-black shadow-2xl active:scale-90 transition leading-none";
                 b.innerText = o; b.onclick = () => checkResult(o === a); grid.appendChild(b);
             });
-            stage.appendChild(grid);
+            if (stage) stage.appendChild(grid);
         }
 
-        // --- AI 助手交互 ---
+        // --- AI 助手 ---
         async function showAIExplain() {
-            const modal = document.getElementById('ai-assistant-modal'), loading = document.getElementById('ai-loading'), content = document.getElementById('ai-content');
-            if (modal) modal.classList.remove('hidden-panel');
-            if (loading) loading.classList.remove('hidden');
-            if (content) content.classList.add('hidden');
+            const m = document.getElementById('ai-assistant-modal'), l = document.getElementById('ai-loading'), c = document.getElementById('ai-content');
+            if (m) m.classList.remove('hidden-panel'); if (l) l.classList.remove('hidden'); if (c) c.classList.add('hidden');
             try {
-                const p = `针对一年级学生，请为词语 "${lastStudyWord.q}" (意思是 "${lastStudyWord.a}") 生成有趣的✨AI解析。包括1个简单例句和1个趣味窍门。使用${currentSubject === 'BM' ? '马来语和中文' : (currentSubject === 'BI' ? '英语和中文' : '中文')}。`;
+                const p = `针对一年级学生，请为词语 "${lastStudyWord.q}" (意思是 "${lastStudyWord.a}") 生成有趣的AI解析。包含例句和趣味窍门。使用${currentSubject === 'BM' ? '马来语和中文' : (currentSubject === 'BI' ? '英语和中文' : '中文')}。`;
                 const r = await callGemini(p);
-                if (content) { content.innerText = r; content.classList.remove('hidden'); }
-                if (loading) loading.classList.add('hidden');
-            } catch (e) {
-                if (content) { content.innerText = "抱歉，AI 助手暂时连接失败。"; content.classList.remove('hidden'); }
-                if (loading) loading.classList.add('hidden');
-            }
+                if (c) { c.innerText = r; c.classList.remove('hidden'); } if (l) l.classList.add('hidden');
+            } catch (e) { if (c) { c.innerText = "解析暂不可用。"; c.classList.remove('hidden'); } if (l) l.classList.add('hidden'); }
         }
         function closeAIModal() { document.getElementById('ai-assistant-modal').classList.add('hidden-panel'); }
 
         async function generateAIQuestions() {
-            const area = document.getElementById('edit-area'), folder = masterData[activeEditSubject][activeEditFolderIdx];
-            if (!area || !folder) return;
-            const old = area.value; area.value = "✨ AI 正在为您创作题目..."; area.disabled = true;
+            const a = document.getElementById('edit-area'), f = masterData[activeEditSubject][activeEditFolderIdx];
+            if (!a || !f) return; const o = a.value; a.value = "✨ AI 正在为您生成内容..."; a.disabled = true;
             try {
-                const p = `请为 ${activeEditSubject} 学科的单元 "${folder.name}" 生成10组适合一年级的练习。格式：提问,答案。例如：苹果,apple。`;
-                const r = await callGemini(p, "你是资深的教材编写专家");
-                area.value = r.trim();
-            } catch (e) { area.value = old; showToast("AI 出题失败。"); } finally { area.disabled = false; }
+                const p = `请为 ${activeEditSubject} 学科单元 "${f.name}" 生成10组练习。格式：提问,答案。例如：苹果,apple。`;
+                const r = await callGemini(p, "你是教材专家"); a.value = r.trim();
+            } catch (e) { a.value = o; showToast("生成失败。"); } finally { a.disabled = false; }
         }
 
-        // --- 其他工具 ---
+        // --- 工具 ---
         function checkResult(c) {
             showFeedback(c);
             if (c) { if(isFirstAttempt) correctCount++; setTimeout(renderLevel, 1200); }
@@ -637,7 +588,7 @@
         }
         function showFeedback(c) {
             const l = getLocale(), f = document.getElementById('feedback');
-            if (f) { f.innerText = c ? l.correct : l.wrong; f.style.transform = "scale(2)"; setTimeout(()=> f.style.transform = "scale(1)", 400); }
+            if (f) { f.innerText = c ? l.correct : l.wrong; f.style.transform = "scale(2.2)"; setTimeout(()=> f.style.transform = "scale(1)", 400); }
         }
         function renderGameComplete(t) {
             const s = document.getElementById('game-stage'), l = getLocale(), p = (correctCount === t);
@@ -661,7 +612,7 @@
             }
         }
 
-        // --- 管理与 PDF ---
+        // --- 管理中心 ---
         function toggleManager() { const m = document.getElementById('manager-modal'); if (m) { m.classList.toggle('hidden-panel'); if(!m.classList.contains('hidden-panel')) { renderManagerTabs(); renderFolderList(); loadEditArea(); } } }
         function renderManagerTabs() { const c = document.getElementById('category-tabs'); if (c) { c.innerHTML = ''; Object.keys(masterData).forEach(s => { const b = document.createElement('button'); b.className = `px-8 py-3 rounded-2xl font-black text-xl transition ${activeEditSubject === s ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-500'}`; b.innerText = s; b.onclick = () => { activeEditSubject = s; activeEditFolderIdx = 0; renderManagerTabs(); renderFolderList(); loadEditArea(); }; c.appendChild(b); }); } }
         function renderFolderList() { const l = document.getElementById('manager-folder-list'); if (l) { l.innerHTML = ''; masterData[activeEditSubject].forEach((f, i) => { const it = document.createElement('div'); it.className = `p-4 rounded-2xl cursor-pointer font-bold ${activeEditFolderIdx === i ? 'bg-blue-50 text-blue-600 border-l-8 border-blue-600' : 'text-gray-600'}`; it.innerText = f.name; it.onclick = () => { activeEditFolderIdx = i; renderFolderList(); loadEditArea(); }; l.appendChild(it); }); } }
@@ -673,15 +624,9 @@
         function showToast(m) { const t = document.getElementById('toast'); if (t) { t.innerText = m || "✅ 已保存"; t.style.opacity = '1'; setTimeout(() => t.style.opacity = '0', 3000); } }
         function openPrintPreview() {
             const f = masterData[currentSubject][currentFolderIdx], raw = f.content.split('\n').filter(l => l.trim().includes(','));
-            let h = `<div style="text-align:center; padding-bottom:20px; border-bottom:3pt solid #333; margin-bottom:30px;">
-                <h1 style="margin:0; font-size:26pt;">PRU PROGRAMME - 实巴荷中山学校</h1>
-                <h2 style="margin:10pt 0; font-size:18pt;">Senarai Kandungan: ${getGameName(currentSubject)}</h2>
-                <p style="margin:0; font-size:14pt; font-weight:bold;">Unit: ${f.name}</p>
-            </div><table style="width:100%; border-collapse:collapse; font-size:13pt; border:1.5pt solid #000;">
-            <thead><tr style="background:#f2f2f2;"><th style="border:1pt solid #000; padding:12pt; width:60pt;">#</th><th style="border:1pt solid #000; padding:12pt; text-align:left;">Soalan / Kandungan</th><th style="border:1pt solid #000; padding:12pt; text-align:left;">Jawapan / Makna</th></tr></thead><tbody>`;
+            let h = `<div style="text-align:center; border-bottom:3pt solid #333; margin-bottom:30px;"><h1 style="margin:0; font-size:26pt;">PRU - 实巴荷中山学校</h1><h2 style="margin:10pt 0; font-size:18pt;">${getGameName(currentSubject)} - ${f.name}</h2></div><table style="width:100%; border-collapse:collapse; font-size:13pt; border:1.5pt solid #000;"><thead><tr style="background:#f2f2f2;"><th style="border:1pt solid #000; padding:12pt; width:60pt;">#</th><th style="border:1pt solid #000; padding:12pt; text-align:left;">Soalan</th><th style="border:1pt solid #000; padding:12pt; text-align:left;">Jawapan</th></tr></thead><tbody>`;
             raw.forEach((l, i) => { const [q, a] = l.split(',').map(s => s.trim()); h += `<tr><td style="border:1pt solid #000; padding:12pt; text-align:center;">${i+1}</td><td style="border:1pt solid #000; padding:12pt; font-weight:bold;">${q}</td><td style="border:1pt solid #000; padding:12pt;">${a}</td></tr>`; });
-            h += `</tbody></table><div style="margin-top:50pt; text-align:right; font-size:11pt;">制作: zfkong</div>`;
-            document.getElementById('print-preview-content').innerHTML = h; document.getElementById('print-modal').classList.remove('hidden-panel');
+            h += `</tbody></table>`; document.getElementById('print-preview-content').innerHTML = h; document.getElementById('print-modal').classList.remove('hidden-panel');
         }
         function closePrintModal() { document.getElementById('print-modal').classList.add('hidden-panel'); }
         function executePrint() { document.getElementById('print-section').innerHTML = document.getElementById('print-preview-content').innerHTML; window.print(); }
