@@ -62,12 +62,12 @@
 
         .suku-0 { color: #2563eb; } .suku-1 { color: #dc2626; } .suku-2 { color: #16a34a; } .suku-3 { color: #ea580c; } .suku-4 { color: #9333ea; }
 
-        /* PDF 样式更新 */
+        /* PDF 样式优化 */
         .print-page { background: white; padding: 1.2cm; color: black; font-family: "Times New Roman", serif; }
         .print-header { text-align: center; border-bottom: 2pt solid black; margin-bottom: 15px; padding-bottom: 10px; }
-        .print-meta { display: flex; justify-content: space-between; margin-bottom: 15px; font-weight: bold; font-size: 12pt; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+        .print-meta { display: flex; justify-content: space-between; margin-bottom: 15px; font-weight: bold; font-size: 13pt; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
         .print-table { width: 100%; border-collapse: collapse; margin-top: 5px; }
-        .print-table th, .print-table td { border: 1pt solid #000; padding: 14px; text-align: left; }
+        .print-table th, .print-table td { border: 1pt solid #000; padding: 15px; text-align: left; vertical-align: middle; }
         .font-main-content { font-size: 17pt; font-weight: bold; }
         .font-sub-content { font-size: 15pt; color: #000; }
 
@@ -78,7 +78,7 @@
             body { background: white; padding: 0; }
             .no-print { display: none !important; }
             #print-section { display: block !important; width: 100%; }
-            .print-page { page-break-after: always; height: auto; margin: 0; border: none; }
+            .print-page { page-break-after: always; height: auto; margin: 0; border: none; padding: 1cm; }
         }
     </style>
 </head>
@@ -93,7 +93,7 @@
                     <h2 class="text-5xl font-bold text-blue-900 mb-6">实巴荷中山学校</h2>
                     <h1 class="text-5xl font-serif text-gray-800 font-bold mb-3">Remember & Understand</h1>
                     <h1 class="text-9xl font-black text-blue-950 tracking-tighter mb-10">(PRU)</h1>
-                    <button onclick="enterSystem()" class="bg-blue-600 text-white px-20 py-8 rounded-full text-5xl font-black shadow-2xl hover:scale-105 transition pointer-events-auto">进入系统 / MASUK</button>
+                    <button onclick="enterSystem()" class="bg-blue-600 text-white px-20 py-8 rounded-full text-5xl font-black shadow-2xl hover:scale-105 transition pointer-events-auto">MASUK / 进入</button>
                 </div>
             </div>
         </div>
@@ -326,14 +326,17 @@
             }
         }
 
-        // --- 修复同步逻辑：喇叭在中间，字在下面 ---
+        // --- 修复逻辑：喇叭与文字同步出现，然后朗读 ---
         function renderBMStudy(q, a) {
             stopAllAudioLogic();
             const stage = document.getElementById('game-stage');
+            // 同步展示内容
             stage.innerHTML = `
                 <div class="flex flex-col items-center justify-center">
-                    <div id="study-speaker" class="text-[20vh] mb-16 animate-bounce">🔊</div>
-                    <div id="study-text" class="opacity-0 transition-opacity duration-500"></div>
+                    <div id="study-speaker" class="text-[18vh] mb-12">🔊</div>
+                    <div id="study-text" class="sub-giant-text tracking-widest" style="font-size:12vh;">
+                        ${getColoredSukuKata(q)}
+                    </div>
                 </div>
             `;
 
@@ -342,20 +345,18 @@
             document.getElementById('speak-btn').onclick = () => renderBMStudy(q, a);
             document.getElementById('next-btn').onclick = () => { playedIndices.push(playedIndices.length); renderLevel(); };
 
-            const utterance = new SpeechSynthesisUtterance(a.toLowerCase());
-            utterance.lang = 'ms-MY';
-            utterance.rate = 0.55;
-
-            utterance.onend = () => {
+            // 稍微延迟一下下让眼睛看到内容后开始朗读
+            setTimeout(() => {
                 const speaker = document.getElementById('study-speaker');
-                const textContainer = document.getElementById('study-text');
-                speaker.classList.remove('animate-bounce');
-                // 只显示彩色音节字
-                textContainer.innerHTML = `<div class="sub-giant-text tracking-widest" style="font-size:12vh;">${getColoredSukuKata(q)}</div>`;
-                textContainer.classList.remove('opacity-0');
-            };
-
-            window.speechSynthesis.speak(utterance);
+                speaker.classList.add('animate-bounce');
+                
+                const utterance = new SpeechSynthesisUtterance(a.toLowerCase());
+                utterance.lang = 'ms-MY';
+                utterance.rate = 0.55;
+                utterance.onend = () => speaker.classList.remove('animate-bounce');
+                
+                window.speechSynthesis.speak(utterance);
+            }, 400);
         }
 
         function renderStandardStudy(q, a) {
@@ -370,7 +371,7 @@
             stage.innerHTML = `<div class="text-center animate-score">${html}</div>`;
             document.getElementById('speak-action').className = 'visible';
             document.getElementById('next-action').className = 'visible';
-            document.getElementById('speak-btn').onclick = () => speak(a, (['BC','SC','SJ'].includes(currentSub)?'zh-CN':'en-SG'));
+            document.getElementById('speak-btn').onclick = () => speak(a, ((['BC','SC','SJ'].includes(currentSub)?'zh-CN':'en-SG')));
             document.getElementById('next-btn').onclick = () => { playedIndices.push(playedIndices.length); renderLevel(); };
             speak(a, (['BC','SC','SJ'].includes(currentSub)?'zh-CN':'en-SG'));
         }
@@ -457,7 +458,7 @@
             const rawArr = f.content.split('\n').filter(l => l.includes(','));
             const isBC = currentSub === 'BC';
 
-            // 预先生成同步的乱序映射，确保两个页面一致
+            // 预先生成同步的乱序映射，确保两个页面题目排列一致
             const scrambledMap = rawArr.map(line => {
                 const [q, a] = line.split(',');
                 return { 
@@ -467,7 +468,7 @@
                 };
             });
 
-            // 构建两页 HTML，彻底修复打印 3 页的 Bug
+            // 构建 HTML，双页固定逻辑
             let h = `
             <div class="print-page">
                 <div class="print-header">
@@ -519,7 +520,6 @@
         }
 
         function executePrint() { 
-            // 核心修复：只将预览内容拷贝到打印区
             const printContent = document.getElementById('print-preview-content').innerHTML;
             document.getElementById('print-section').innerHTML = printContent;
             window.print(); 
