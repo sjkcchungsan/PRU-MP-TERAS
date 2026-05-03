@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PRU (Programme Remember & Understand) - 实巴荷中山学校</title>
+    <title>PRU (Programme Remember & Understand) - SJK(C) Chung San</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/pinyin-pro"></script>
     <style>
@@ -25,7 +25,7 @@
             overflow: hidden; display: flex; flex-direction: column; z-index: 10;
         }
 
-        /* 各科目渐变背景 */
+        /* Subject Backgrounds */
         .bg-home { background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%); }
         .bg-bm { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); }
         .bg-bc { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); }
@@ -39,12 +39,12 @@
 
         .hidden-panel { display: none !important; }
         
-        /* 文本阴影增强 */
+        /* Text Outlines for Legibility */
         .outline-shadow {
             text-shadow: 2px 2px 3px #000, -2px -2px 3px #000, 2px -2px 3px #000, -2px 2px 3px #000;
         }
 
-        /* Suku Kata 颜色方案 */
+        /* Suku Kata Color Palette */
         .suku-0 { color: #ffffff; } 
         .suku-1 { color: #ffff00; } 
         .suku-2 { color: #00ffff; } 
@@ -102,10 +102,10 @@
             transition: opacity 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        /* PDF 打印核心样式 - 严格 A4 规范 */
+        /* PDF Print Styles - Strict A4 */
         .print-page { 
             background: white; 
-            padding: 2.54cm; /* Normal Margin: 1 inch */
+            padding: 2.54cm; 
             color: black; 
             font-family: "Times New Roman", serif; 
             width: 210mm;
@@ -127,9 +127,8 @@
         .page-title { background: #f2f2f2; padding: 6px 12px; border-left: 6px solid #000; font-size: 13pt; font-weight: bold; margin-bottom: 12px; }
 
         @media print {
-            @page { size: A4 portrait; margin: 0; } /* 控制打印机 A4 纸张，边距已在 print-page 内定义 */
+            @page { size: A4 portrait; margin: 0; } 
             body { background: white !important; margin: 0; padding: 0; }
-            /* 隐藏所有操作 UI */
             .no-print, nav, header, footer, .menu, .sidebar, .toolbar, .btn, .actions, .print-preview, .preview-button, .control-btn, .action-btn, #landing-page, #subject-menu, #manager-modal, #print-modal h2, #print-modal .flex {
                 display: none !important;
                 visibility: hidden !important;
@@ -144,20 +143,20 @@
 <body class="bg-home">
 
     <div class="app-maximizer">
-        <!-- 封面入口 -->
+        <!-- Landing Page -->
         <div id="landing-page" class="h-full w-full flex flex-col items-center justify-center text-center p-10 fade-in">
             <div class="bg-white/40 backdrop-blur-2xl p-16 rounded-[4rem] shadow-2xl border-4 border-white/50 max-w-6xl w-full flex flex-row items-center gap-16">
-                <img src="LOGO SEKOLAH.png" alt="校徽" class="h-[40vh] w-auto drop-shadow-2xl float-anim" onerror="this.src='https://via.placeholder.com/400x400?text=LOGO'">
+                <img src="LOGO SEKOLAH.png" alt="School Logo" class="h-[40vh] w-auto drop-shadow-2xl float-anim" onerror="this.src='https://via.placeholder.com/400x400?text=LOGO'">
                 <div class="text-left flex-1">
-                    <h2 class="text-5xl font-bold text-blue-900 mb-6">实巴荷中山学校</h2>
+                    <h2 class="text-5xl font-bold text-blue-900 mb-6">SJK(C) CHUNG SAN</h2>
                     <h1 class="text-4xl font-serif text-gray-800 font-bold mb-3">Remember & Understand</h1>
                     <h1 class="text-9xl font-black text-blue-950 tracking-tighter mb-10">(PRU)</h1>
-                    <button onclick="enterSystem()" class="bg-blue-600 text-white px-16 py-6 rounded-full text-4xl font-black shadow-2xl hover:scale-105 transition">MASUK / 进入</button>
+                    <button onclick="enterSystem()" class="bg-blue-600 text-white px-16 py-6 rounded-full text-4xl font-black shadow-2xl hover:scale-105 transition">ENTER / 进入</button>
                 </div>
             </div>
         </div>
 
-        <!-- 科目菜单 -->
+        <!-- Main Subject Menu -->
         <div id="subject-menu" class="hidden-panel h-full w-full p-12 fade-in flex flex-col relative">
             <div class="flex justify-between items-center mb-6 relative z-[100] px-8">
                 <h3 class="text-xl font-black text-gray-700 uppercase tracking-widest">Pilih Subjek / 选择科目</h3>
@@ -185,7 +184,7 @@
                 </div>
             </div>
 
-            <!-- 单元选择 -->
+            <!-- Folder Selection View -->
             <div id="folder-selection" class="hidden-panel max-w-6xl mx-auto bg-white/60 backdrop-blur-3xl p-8 rounded-[3.5rem] shadow-2xl border-4 border-white/70 flex-1 flex flex-col overflow-hidden relative">
                 <div class="flex items-center justify-between mb-8 relative z-[200]">
                     <div class="flex items-center gap-6">
@@ -201,12 +200,13 @@
                 <div id="folder-grid" class="grid grid-cols-4 gap-4 overflow-y-auto pr-2 pb-10 relative z-10"></div>
             </div>
 
+            <!-- Management Access Button (English) -->
             <div id="manager-btn-container" class="absolute bottom-6 left-0 w-full flex justify-center no-print">
-                <button onclick="toggleManager()" class="bg-gray-900 text-white px-8 py-3 rounded-full shadow-2xl font-bold">⚙️ 管理中心</button>
+                <button onclick="toggleManager()" class="bg-gray-900 text-white px-8 py-3 rounded-full shadow-2xl font-bold">⚙️ CONTROL CENTER</button>
             </div>
         </div>
 
-        <!-- 游戏核心渲染区域 -->
+        <!-- Game Stage -->
         <div id="game-container" class="hidden-panel fixed inset-0 z-[2000] flex flex-col bg-home overflow-hidden">
             <div class="tv-corner top-l"><button onclick="exitGameAndStopAudio()" class="control-btn" id="btn-game-back">⬅ KEMBALI</button></div>
             <div class="tv-corner top-center pointer-events-none"><div id="game-title" class="text-2xl font-black text-white drop-shadow-lg uppercase">PRU</div></div>
@@ -227,34 +227,37 @@
         </div>
     </div>
 
-    <!-- 内容管理中心 -->
+    <!-- Management Center Modal (English for non-Chinese Teachers) -->
     <div id="manager-modal" class="hidden-panel fixed inset-0 z-[5000] bg-black/95 backdrop-blur-xl flex items-center justify-center p-10">
         <div class="bg-white rounded-[3rem] w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl text-gray-800">
             <div class="p-8 border-b flex justify-between bg-gray-50">
-                <h2 class="text-3xl font-black">⚙️ 内容管理中心</h2>
+                <h2 class="text-3xl font-black">⚙️ CONTENT MANAGEMENT</h2>
                 <button onclick="toggleManager()" class="text-6xl text-gray-300 hover:text-gray-900 transition">&times;</button>
             </div>
             <div id="category-tabs" class="px-10 py-4 flex gap-2 bg-white border-b"></div>
             <div class="flex-1 p-10 flex gap-8 overflow-hidden">
                 <div class="w-1/3 border-r pr-6">
-                    <div class="flex justify-between items-center mb-4"><h3 class="font-bold text-xl">单元列表</h3><button onclick="addFolder()" class="bg-blue-600 text-white px-4 py-1 rounded-xl">+ 新增</button></div>
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-xl">Unit List</h3>
+                        <button onclick="addFolder()" class="bg-blue-600 text-white px-4 py-1 rounded-xl">+ Add New</button>
+                    </div>
                     <div id="manager-folder-list" class="space-y-2"></div>
                 </div>
                 <div class="w-2/3 flex flex-col">
-                    <label class="font-bold text-xl mb-4">编辑数据 (BM格式: se-ko-lah,sekolah)</label>
-                    <textarea id="edit-area" class="flex-1 border-4 border-gray-100 bg-gray-50 rounded-3xl p-6 font-mono text-xl outline-none focus:border-blue-400"></textarea>
+                    <label id="edit-area-label" class="font-bold text-xl mb-4">Edit Data (Format: question,answer)</label>
+                    <textarea id="edit-area" class="flex-1 border-4 border-gray-100 bg-gray-50 rounded-3xl p-6 font-mono text-xl outline-none focus:border-blue-400" placeholder="Example for BM:&#10;se-ko-lah,sekolah&#10;Example for Science:&#10;lung,lung"></textarea>
                 </div>
             </div>
             <div class="p-8 bg-gray-50 border-t flex justify-end gap-4">
-                <button onclick="saveChanges()" class="px-12 py-4 rounded-2xl bg-blue-600 text-white font-black shadow-lg">💾 保存更改</button>
+                <button onclick="saveChanges()" class="px-12 py-4 rounded-2xl bg-blue-600 text-white font-black shadow-lg">💾 SAVE CHANGES</button>
             </div>
         </div>
     </div>
 
-    <!-- PDF 预览面板 -->
+    <!-- PDF Preview Modal -->
     <div id="print-modal" class="hidden-panel fixed inset-0 z-[8000] bg-black/95 flex flex-col p-10 no-print">
         <div class="flex justify-between items-center text-white mb-6">
-            <h2 class="text-4xl font-black">🖨️ PDF 预览 (A4 练习卷)</h2>
+            <h2 class="text-4xl font-black">🖨️ PDF Preview (A4 Worksheet)</h2>
             <div class="flex gap-6">
                 <button onclick="executePrint()" class="bg-blue-600 px-12 py-5 rounded-2xl font-black text-2xl shadow-xl hover:bg-blue-500">PRINT</button>
                 <button onclick="closePrintModal()" class="bg-white/20 px-12 py-5 rounded-2xl font-bold text-2xl hover:bg-white/30">CLOSE</button>
@@ -548,7 +551,7 @@
             const dataChunks = chunkArray(map, 20);
             let finalHtml = '';
 
-            // 第一部分：温习笔记 (Nota Pembelajaran)
+            // Section 1: Nota Pembelajaran
             dataChunks.forEach((chunk, pageIdx) => {
                 finalHtml += `
                 <div class="print-page">
@@ -569,7 +572,7 @@
                 </div>`;
             });
 
-            // 第二部分：自修练习 (Latihan Kendiri / Kuiz)
+            // Section 2: Latihan Kendiri / Kuiz
             dataChunks.forEach((chunk, pageIdx) => {
                 finalHtml += `
                 <div class="print-page">
@@ -598,28 +601,96 @@
             window.print(); 
         }
         function closePrintModal() { document.getElementById('print-modal').classList.add('hidden-panel'); }
-        function toggleManager() { document.getElementById('manager-modal').classList.toggle('hidden-panel'); renderManagerTabs(); renderManagerFolders(); }
+        
+        // Settings Manager Logic (Fully English Interface)
+        function toggleManager() { 
+            document.getElementById('manager-modal').classList.toggle('hidden-panel'); 
+            renderManagerTabs(); 
+            renderManagerFolders(); 
+        }
+        
         function renderManagerTabs() {
             const tabs = document.getElementById('category-tabs'); tabs.innerHTML = '';
             Object.keys(masterData).forEach(s => {
-                const b = document.createElement('button'); b.className = `px-6 py-2 rounded-xl font-bold transition ${activeEditSub===s?'bg-blue-600 text-white shadow-md':'bg-white text-gray-400 border border-gray-100'}`;
-                b.innerText = s; b.onclick = () => { activeEditSub = s; activeEditIdx = 0; renderManagerTabs(); renderManagerFolders(); loadArea(); };
+                const b = document.createElement('button'); 
+                b.className = `px-6 py-2 rounded-xl font-bold transition ${activeEditSub===s?'bg-blue-600 text-white shadow-md':'bg-white text-gray-400 border border-gray-100'}`;
+                b.innerText = s; 
+                b.onclick = () => { 
+                    activeEditSub = s; 
+                    activeEditIdx = 0; 
+                    renderManagerTabs(); 
+                    renderManagerFolders(); 
+                    loadArea(); 
+                };
                 tabs.appendChild(b);
             });
         }
+        
         function renderManagerFolders() {
             const list = document.getElementById('manager-folder-list'); list.innerHTML = '';
+            if (!masterData[activeEditSub]) return;
             masterData[activeEditSub].forEach((f, i) => {
-                const d = document.createElement('div'); d.className = `p-4 rounded-xl cursor-pointer ${activeEditIdx===i?'bg-blue-50 text-blue-600 border-l-8 border-blue-600 font-black':'bg-gray-50 border border-transparent'}`;
-                d.innerText = f.name; d.onclick = () => { activeEditIdx = i; renderManagerFolders(); loadArea(); };
+                const d = document.createElement('div'); 
+                d.className = `p-4 rounded-xl cursor-pointer ${activeEditIdx===i?'bg-blue-50 text-blue-600 border-l-8 border-blue-600 font-black':'bg-gray-50 border border-transparent'}`;
+                d.innerText = f.name; 
+                d.onclick = () => { 
+                    activeEditIdx = i; 
+                    renderManagerFolders(); 
+                    loadArea(); 
+                };
                 list.appendChild(d);
             });
         }
-        function loadArea() { document.getElementById('edit-area').value = masterData[activeEditSub][activeEditIdx].content; }
-        function saveChanges() { masterData[activeEditSub][activeEditIdx].content = document.getElementById('edit-area').value; showToast("OK"); }
-        function showToast(m) { const t = document.getElementById('toast'); t.innerText = m; t.style.opacity = '1'; setTimeout(()=>t.style.opacity='0', 2000); }
-        function addFolder() { const n = prompt("单元名称:"); if(n) { masterData[activeEditSub].push({name:n, content:''}); activeEditIdx = masterData[activeEditSub].length-1; renderManagerFolders(); loadArea(); } }
-        function speak(t, l, onEndCallback) { window.speechSynthesis.cancel(); const m = new SpeechSynthesisUtterance(t); m.lang = l; m.rate = 0.55; if (onEndCallback) m.onend = onEndCallback; window.speechSynthesis.speak(m); }
+        
+        function loadArea() { 
+            const textarea = document.getElementById('edit-area');
+            const label = document.getElementById('edit-area-label');
+            const currentData = masterData[activeEditSub]?.[activeEditIdx];
+            
+            textarea.value = currentData ? currentData.content : '';
+            
+            // Adjust dynamic labels based on subject
+            if (activeEditSub === 'BM') {
+                label.innerText = "Edit Data (BM Format: suku-kata,word)";
+            } else if (['BC', 'SJ', 'SC'].includes(activeEditSub)) {
+                label.innerText = "Edit Data (Chinese Format: word,description)";
+            } else {
+                label.innerText = "Edit Data (Format: question,answer)";
+            }
+        }
+        
+        function saveChanges() { 
+            if (!masterData[activeEditSub] || !masterData[activeEditSub][activeEditIdx]) return;
+            masterData[activeEditSub][activeEditIdx].content = document.getElementById('edit-area').value; 
+            showToast("Saved Successfully"); 
+        }
+        
+        function showToast(m) { 
+            const t = document.getElementById('toast'); 
+            t.innerText = m; 
+            t.style.opacity = '1'; 
+            setTimeout(()=>t.style.opacity='0', 2000); 
+        }
+        
+        function addFolder() { 
+            const n = prompt("Enter Unit Name (e.g. Unit 2):"); 
+            if(n) { 
+                if (!masterData[activeEditSub]) masterData[activeEditSub] = [];
+                masterData[activeEditSub].push({name: n, content: ''}); 
+                activeEditIdx = masterData[activeEditSub].length - 1; 
+                renderManagerFolders(); 
+                loadArea(); 
+            } 
+        }
+        
+        function speak(t, l, onEndCallback) { 
+            window.speechSynthesis.cancel(); 
+            const m = new SpeechSynthesisUtterance(t); 
+            m.lang = l; 
+            m.rate = 0.55; 
+            if (onEndCallback) m.onend = onEndCallback; 
+            window.speechSynthesis.speak(m); 
+        }
     </script>
 </body>
 </html>
