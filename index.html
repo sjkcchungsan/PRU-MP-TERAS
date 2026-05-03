@@ -100,7 +100,41 @@
             transition: opacity 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        /* PDF Print Styles - Strict A4 */
+        /* MT Matching Game Specific - Compact grid for space efficiency */
+        .mt-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1.5vh;
+            width: 80%;
+            max-width: 850px;
+        }
+        .mt-card {
+            aspect-ratio: 4 / 3;
+            background: white;
+            border-radius: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+            font-size: 3.2vh;
+            font-weight: 900;
+            cursor: pointer;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+            border: 4px solid transparent;
+            transition: all 0.2s;
+            padding: 0.5vh;
+        }
+        .mt-card.selected { border-color: #3b82f6; background: #eff6ff; transform: scale(1.05); }
+        .mt-card.correct { visibility: hidden; opacity: 0; pointer-events: none; }
+        .mt-card.wrong { border-color: #ef4444; background: #fef2f2; animation: mt-shake 0.4s; }
+
+        @keyframes mt-shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+
+        /* PDF Print Styles */
         .print-page { 
             background: white; 
             padding: 2.54cm; 
@@ -182,7 +216,7 @@
                 </div>
             </div>
 
-            <!-- Unit Selection -->
+            <!-- Unit Selection View -->
             <div id="folder-selection" class="hidden-panel max-w-6xl mx-auto bg-white/60 backdrop-blur-3xl p-8 rounded-[3.5rem] shadow-2xl border-4 border-white/70 flex-1 flex flex-col overflow-hidden relative">
                 <div class="flex items-center justify-between mb-8 relative z-[200]">
                     <div class="flex items-center gap-6">
@@ -198,13 +232,13 @@
                 <div id="folder-grid" class="grid grid-cols-4 gap-4 overflow-y-auto pr-2 pb-10 relative z-10"></div>
             </div>
 
-            <!-- Control Center Trigger -->
+            <!-- Management Trigger -->
             <div id="manager-btn-container" class="absolute bottom-6 left-0 w-full flex justify-center no-print">
                 <button onclick="toggleManager()" class="bg-gray-900 text-white px-8 py-3 rounded-full shadow-2xl font-bold uppercase tracking-wider">⚙️ Control Center</button>
             </div>
         </div>
 
-        <!-- Stage Container -->
+        <!-- Stage Area -->
         <div id="game-container" class="hidden-panel fixed inset-0 z-[2000] flex flex-col bg-home overflow-hidden">
             <div class="tv-corner top-l"><button onclick="exitGameAndStopAudio()" class="control-btn" id="btn-game-back">⬅ KEMBALI</button></div>
             <div class="tv-corner top-center pointer-events-none"><div id="game-title" class="text-2xl font-black text-white drop-shadow-lg uppercase">PRU</div></div>
@@ -225,7 +259,7 @@
         </div>
     </div>
 
-    <!-- Management Center (English Interface) -->
+    <!-- Manager Interface (English) -->
     <div id="manager-modal" class="hidden-panel fixed inset-0 z-[5000] bg-black/95 backdrop-blur-xl flex items-center justify-center p-10">
         <div class="bg-white rounded-[3rem] w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl text-gray-800">
             <div class="p-8 border-b flex justify-between bg-gray-50">
@@ -242,7 +276,7 @@
                     <div id="manager-folder-list" class="space-y-2 overflow-y-auto max-h-[50vh] pr-2"></div>
                 </div>
                 <div class="w-2/3 flex flex-col">
-                    <label id="edit-area-label" class="font-bold text-xl mb-4 text-blue-900">Edit Data</label>
+                    <label id="edit-area-label" class="font-bold text-xl mb-4 text-blue-900">Edit Vocabulary Data</label>
                     <textarea id="edit-area" class="flex-1 border-4 border-gray-100 bg-gray-50 rounded-3xl p-6 font-mono text-xl outline-none focus:border-blue-400 focus:bg-white transition-all shadow-inner" placeholder="Format: question,answer"></textarea>
                     <div class="mt-4 text-sm text-gray-400 font-medium italic">Tip: Use comma (,) to separate the question and answer. One entry per line.</div>
                 </div>
@@ -269,13 +303,29 @@
     <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-10 py-4 rounded-full z-[9999] opacity-0 transition-opacity font-bold">OK</div>
 
     <script>
-        // Data Management - Local Storage Priority
-        const STORAGE_KEY = 'PRU_CHUNG_SAN_LOCAL_DATA';
+        // Data Management - Local Storage
+        const STORAGE_KEY = 'PRU_CHUNG_SAN_LOCAL_DATA_V3_FINAL_V3';
         
+        // Generate pre-set multiplication tables 2 to 12
+        const generateMathTables = () => {
+            const tables = [];
+            for(let i=2; i<=12; i++) {
+                let content = "";
+                for(let j=1; j<=12; j++) {
+                    content += `${j}x${i},${j*i}\n`;
+                }
+                tables.push({ name: `乘法表 ${i}`, content: content.trim() });
+            }
+            return tables;
+        };
+
         const defaultData = {
             'BM': [{ name: "Unit 1", content: "se-ko-lah,sekolah\nme-ja,meja" }],
-            'BC': [{ name: "Unit 1", content: "老师,老师\n学生,学生" }],
-            'BI': [], 'MT': [], 'SC': [], 'SJ': []
+            'BC': [{ name: "生词 1", content: "老师,老师\n学生,学生" }],
+            'BI': [{ name: "Vocab 1", content: "teacher,老师\nstudent,学生" }], 
+            'MT': generateMathTables(), 
+            'SC': [], 
+            'SJ': []
         };
 
         let masterData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || defaultData;
@@ -284,14 +334,16 @@
             localStorage.setItem(STORAGE_KEY, JSON.stringify(masterData));
         }
 
-        // Global State
+        // State Variables
         var currentSub = '', currentFolderIdx = -1, currentMode = 'quiz', correctCount = 0, playedIndices = [], activeEditSub = 'BM', activeEditIdx = 0;
         var historyStep = -1;
+        var mtSelectedCards = [];
 
         const uiText = {
             'BM': { back: '⬅ KEMBALI', prev: '⬅ SEBELUMNYA', next: 'SETERUSNYA ➔', speak: '🔊 SEBUT', quiz: '🎮 Jawab Soalan', study: '📖 Nota Pembelajaran', print: '🖨️ PDF', name: 'Nama', kelas: 'Kelas', bil: 'Bil', question: 'Soalan', answer: 'Jawapan', betul: 'BETUL!', salah: 'SALAH!' },
             'BC': { back: '⬅ 返回', prev: '⬅ 上一题', next: '下一个 ➔', speak: '🔊 朗读', quiz: '🎮 闯关模式', study: '📖 温习笔记', print: '🖨️ 保存PDF', name: '姓名', kelas: '班级', bil: '编号', question: '题目内容', answer: '答案词汇', betul: '正确！', salah: '错误！' },
             'BI': { back: '⬅ BACK', prev: '⬅ PREVIOUS', next: 'NEXT ➔', speak: '🔊 SPEAK', quiz: '🎮 Quiz Mode', study: '📖 Study Mode', print: '🖨️ Save PDF', name: 'Name', kelas: 'Class', bil: 'No.', question: 'Question', answer: 'Answer', betul: 'CORRECT!', salah: 'WRONG!' },
+            'MT': { back: '⬅ 返回', prev: '⬅ 上一题', next: '下一步 ➔', speak: '🔊 朗读', quiz: '🎮 连连看闯关', study: '📖 乘法表温习', print: '🖨️ 打印练习卷', name: '姓名', kelas: '班级', bil: '编号', question: '算式题目', answer: '得数', betul: '正确！', salah: '错误！' },
             'SC': { back: '⬅ 返回', prev: '⬅ 上一题', next: '下一个 ➔', speak: '🔊 朗读', quiz: '🎮 闯关模式', study: '📖 温习笔记', print: '🖨️ 保存PDF', name: '姓名', kelas: '班级', bil: '编号', question: '题目内容', answer: '答案词汇', betul: '正确！', salah: '错误！' },
             'SJ': { back: '⬅ 返回', prev: '⬅ 上一题', next: '下一个 ➔', speak: '🔊 朗读', quiz: '🎮 闯关模式', study: '📖 温习笔记', print: '🖨️ 保存PDF', name: '姓名', kelas: '班级', bil: '编号', question: '题目内容', answer: '答案词汇', betul: '正确！', salah: '错误！' }
         };
@@ -345,7 +397,7 @@
             currentSub = sub; currentFolderIdx = -1; updateActionButtons();
             document.getElementById('subject-grid').classList.add('hidden-panel');
             document.getElementById('folder-selection').classList.remove('hidden-panel');
-            document.getElementById('folder-view-title').innerText = `Unit: ${sub}`;
+            document.getElementById('folder-view-title').innerText = `Subject: ${sub}`;
             document.getElementById('btn-back-subject').innerText = getUI('back');
             document.getElementById('btn-quiz').innerText = getUI('quiz');
             document.getElementById('btn-study').innerText = getUI('study');
@@ -386,8 +438,30 @@
         }
 
         function getLangCode() {
-            const map = { 'BM': 'ms-MY', 'BC': 'zh-CN', 'BI': 'en-US', 'SC': 'zh-CN', 'SJ': 'zh-CN' };
+            const map = { 'BM': 'ms-MY', 'BC': 'zh-CN', 'BI': 'en-US', 'MT': 'zh-CN', 'SC': 'zh-CN', 'SJ': 'zh-CN' };
             return map[currentSub] || 'zh-CN';
+        }
+
+        // Mnemonic Converter (2x3,6 -> 二 三 六)
+        function formatMathMnemonic(q, a) {
+            const numMap = {'0':'零','1':'一','2':'二','3':'三','4':'四','5':'五','6':'六','7':'七','8':'八','9':'九','10':'十','11':'十一','12':'十二'};
+            const parts = q.toLowerCase().split('x');
+            if(parts.length < 2) return q + ' ' + a;
+            const n1 = parts[0].trim();
+            const n2 = parts[1].trim();
+            
+            const toChinese = (n) => {
+                let num = parseInt(n);
+                if(numMap[num.toString()]) return numMap[num.toString()];
+                if(num < 100) {
+                    let ten = Math.floor(num/10);
+                    let unit = num%10;
+                    return (ten > 1 ? numMap[ten] : '') + '十' + (unit > 0 ? numMap[unit] : '');
+                }
+                return n;
+            };
+            
+            return toChinese(n1) + ' ' + toChinese(n2) + ' ' + toChinese(a);
         }
 
         function renderLevel(moveStep = 1) {
@@ -402,6 +476,16 @@
             const folder = masterData[currentSub][currentFolderIdx];
             const rawLines = folder.content.split('\n').filter(l => l.trim() !== '');
             
+            // Mathematics Matching Game Quiz - Pick Random 5
+            if (currentSub === 'MT' && currentMode === 'quiz') {
+                document.getElementById('next-action').className = 'invisible';
+                document.getElementById('prev-action').className = 'invisible';
+                // Pick 5 random pairs
+                const sampled = [...rawLines].sort(() => 0.5 - Math.random()).slice(0, 5);
+                renderMTMatchingQuiz(sampled);
+                return;
+            }
+
             historyStep += moveStep;
             if(historyStep >= rawLines.length) { renderEnd(rawLines.length); return; }
             if(historyStep > 0) document.getElementById('prev-action').className = 'visible';
@@ -433,7 +517,13 @@
         function renderStudy(pinyin, hanzi, meaning) {
             const stage = document.getElementById('game-stage');
             document.getElementById('speak-action').className = 'visible';
-            document.getElementById('speak-btn').onclick = () => { stopAllAudioLogic(); speak(hanzi, getLangCode()); };
+            
+            let speakText = hanzi;
+            if (currentSub === 'MT') {
+                speakText = formatMathMnemonic(meaning, hanzi);
+            }
+            
+            document.getElementById('speak-btn').onclick = () => { stopAllAudioLogic(); speak(speakText, getLangCode()); };
 
             let contentHTML = '';
             if (currentSub === 'BM') {
@@ -446,16 +536,18 @@
                         <div class="hanzi-text giant-text mb-6 outline-shadow">${hanzi}</div>
                         ${meaning ? `<div class="meaning-text text-5xl outline-shadow">${meaning}</div>` : ''}
                     </div>`;
+            } else if (currentSub === 'MT') {
+                contentHTML = `<div class="text-[8vh] mb-8">🔊</div><div class="text-center"><div class="hanzi-text giant-text mb-4 outline-shadow">${meaning}</div><div class="text-[12vh] text-white outline-shadow">= ${hanzi}</div></div>`;
             } else {
                 contentHTML = `<div class="text-[8vh] mb-8">🔊</div><div class="text-center"><div class="hanzi-text giant-text mb-4 uppercase outline-shadow">${meaning}</div><div class="text-4xl text-white/50">${hanzi}</div></div>`;
             }
             stage.innerHTML = `<div class="flex flex-col items-center justify-center w-full px-8">${contentHTML}</div>`;
-            setTimeout(() => speak(hanzi, getLangCode()), 300);
+            setTimeout(() => speak(speakText, getLangCode()), 300);
         }
 
         function renderQuiz(pinyin, hanzi, meaning, rawLines) {
             const stage = document.getElementById('game-stage');
-            const isChineseSub = ['BC', 'SJ', 'SC'].includes(currentSub);
+            const isChineseSub = ['BC', 'SJ', 'SC', 'MT'].includes(currentSub);
             const isBM = currentSub === 'BM';
 
             stage.innerHTML = `
@@ -464,20 +556,21 @@
                         <span style="font-size: 5vh;">🔊</span>
                     </button>
                     <div id="quiz-display" class="flex flex-col items-center mb-10 text-center w-full px-4">
-                        ${isChineseSub ? `
+                        ${isChineseSub && currentSub !== 'MT' ? `
                             <div class="pinyin-text text-5xl mb-3 font-bold uppercase outline-shadow">${pinyin}</div>
                             ${meaning ? `<div class="meaning-text text-3xl opacity-90 outline-shadow">${meaning}</div>` : ''}
-                        ` : (isBM ? '' : `<div class="text-white text-6xl font-bold uppercase outline-shadow">${currentSub==='BI' ? meaning : pinyin}</div>`)}
+                        ` : (currentSub === 'MT' ? `<div class="text-white text-9xl font-black outline-shadow">${meaning} = ?</div>` : (isBM ? '' : `<div class="text-white text-6xl font-bold uppercase outline-shadow">${currentSub==='BI' ? meaning : pinyin}</div>`))}
                     </div>
                     <div id="quiz-options" class="grid grid-cols-2 gap-8 w-full relative z-20 pb-16"></div>
                 </div>
             `;
 
             const sBtn = document.getElementById('quiz-sound-btn');
-            sBtn.onclick = () => speak(hanzi, getLangCode());
+            let speakText = currentSub === 'MT' ? formatMathMnemonic(meaning, "?") : hanzi;
+            sBtn.onclick = () => speak(speakText, getLangCode());
             
             const grid = document.getElementById('quiz-options');
-            let target = isBM ? meaning : (isChineseSub ? hanzi : (currentSub==='BI' ? meaning : pinyin));
+            let target = currentSub === 'MT' ? hanzi : (isBM ? meaning : (isChineseSub ? hanzi : (currentSub==='BI' ? meaning : pinyin)));
             
             let opts = [target]; 
             while(opts.length < 2) {
@@ -485,7 +578,7 @@
                 let rM, rH;
                 if (rLine.includes(',')) { [rM, rH] = rLine.split(',').map(s => s.trim()); }
                 else { rH = rLine.trim(); rM = rH; }
-                let rVal = isBM ? rM : (isChineseSub ? rH : (currentSub==='BI' ? rM : autoPinyin(rH)));
+                let rVal = currentSub === 'MT' ? rH : (isBM ? rM : (isChineseSub ? rH : (currentSub==='BI' ? rM : autoPinyin(rH))));
                 if(!opts.includes(rVal)) opts.push(rVal);
             }
             
@@ -504,6 +597,74 @@
             setTimeout(() => sBtn.click(), 500);
         }
 
+        // --- MT Matching Logic (Random 5) ---
+        function renderMTMatchingQuiz(sampledLines) {
+            const stage = document.getElementById('game-stage');
+            stage.innerHTML = `<div class="mt-grid" id="mt-grid"></div>`;
+            const grid = document.getElementById('mt-grid');
+            
+            let cards = [];
+            sampledLines.forEach((line, i) => {
+                if(!line.includes(',')) return;
+                const [q, a] = line.split(',').map(s => s.trim());
+                cards.push({ text: q, pairId: i, type: 'q', valA: a });
+                cards.push({ text: a, pairId: i, type: 'a', valQ: q });
+            });
+
+            cards.sort(() => Math.random() - 0.5);
+            mtSelectedCards = [];
+            cards.forEach(cardData => {
+                const card = document.createElement('div');
+                card.className = "mt-card";
+                card.innerText = cardData.text;
+                card.onclick = () => handleMTCardClick(card, cardData);
+                grid.appendChild(card);
+            });
+            document.getElementById('progress-val').innerText = "Matching";
+        }
+
+        function handleMTCardClick(element, data) {
+            if (element.classList.contains('correct') || element.classList.contains('selected') || mtSelectedCards.length === 2) return;
+            element.classList.add('selected');
+            mtSelectedCards.push({ element, data });
+
+            if (mtSelectedCards.length === 2) {
+                const [c1, c2] = mtSelectedCards;
+                if (c1.data.pairId === c2.data.pairId && c1.data.type !== c2.data.type) {
+                    // Match Success
+                    let q = c1.data.type === 'q' ? c1.data.text : c2.data.text;
+                    let a = c1.data.type === 'a' ? c1.data.text : c2.data.text;
+                    speak(formatMathMnemonic(q, a), getLangCode());
+                    
+                    setTimeout(() => {
+                        c1.element.classList.add('correct');
+                        c2.element.classList.add('correct');
+                        mtSelectedCards = [];
+                        checkMTWin();
+                    }, 400);
+                } else {
+                    // Match Fail
+                    setTimeout(() => {
+                        c1.element.classList.add('wrong');
+                        c2.element.classList.add('wrong');
+                        setTimeout(() => {
+                            c1.element.classList.remove('selected', 'wrong');
+                            c2.element.classList.remove('selected', 'wrong');
+                            mtSelectedCards = [];
+                        }, 500);
+                    }, 400);
+                }
+            }
+        }
+
+        function checkMTWin() {
+            const total = document.querySelectorAll('.mt-card').length;
+            const corrects = document.querySelectorAll('.mt-card.correct').length;
+            if (corrects === total && total > 0) {
+                setTimeout(() => renderEnd(total/2), 800);
+            }
+        }
+
         function checkQuiz(correct) {
             const fb = document.getElementById('feedback'); if(!fb) return;
             fb.style.opacity = '1';
@@ -516,7 +677,7 @@
         function renderEnd(total) {
             const stage = document.getElementById('game-stage');
             stage.innerHTML = `<div class="text-center text-white"><div class="text-7xl font-black mb-10 uppercase">SELESAI</div>
-                <div class="text-[12vh] leading-none mb-10 outline-shadow">${correctCount} / ${total}</div>
+                <div class="text-[12vh] leading-none mb-10 outline-shadow">${currentSub==='MT'?'HEBAT!':correctCount + ' / ' + total}</div>
                 <button onclick="exitGameAndStopAudio()" class="bg-white text-blue-900 px-20 py-6 rounded-full text-4xl font-black shadow-2xl pointer-events-auto">KEMBALI</button></div>`;
         }
 
@@ -531,8 +692,9 @@
         function openPrintPreview() {
             if(currentFolderIdx === -1) return;
             const f = masterData[currentSub][currentFolderIdx];
+            // PDF Always uses ALL lines (even if quiz sampled)
             const rawLines = f.content.split('\n').filter(l => l.trim() !== '');
-            const isChineseSub = ['BC', 'SJ', 'SC'].includes(currentSub);
+            const isChineseSub = ['BC', 'SJ', 'SC', 'MT'].includes(currentSub);
             const isBM = currentSub === 'BM';
 
             const map = rawLines.map(line => {
@@ -542,11 +704,11 @@
                 return { originalSuku: suku, scrambledSuku: isBM ? scrambleSukuKata(suku) : suku, ans: full, pinyin: autoPinyin(full) };
             });
 
-            const bilLabel = isBM ? "Bil" : getUI('bil');
-            const qLabel = isBM ? "Soalan" : getUI('question');
-            const aLabel = isBM ? "Jawapan" : getUI('answer');
-            const metaName = isBM ? "Nama" : "姓名";
-            const metaClass = isBM ? "Kelas" : "班级";
+            const bilLabel = getUI('bil');
+            const qLabel = getUI('question');
+            const aLabel = getUI('answer');
+            const metaName = getUI('name');
+            const metaClass = getUI('kelas');
 
             const chunkArray = (arr, size) => {
                 const res = [];
@@ -557,7 +719,7 @@
             const dataChunks = chunkArray(map, 20);
             let finalHtml = '';
 
-            // Section 1: Nota Pembelajaran - Both Q show scrambled for BM
+            // Section 1: Nota
             dataChunks.forEach((chunk, pageIdx) => {
                 finalHtml += `
                 <div class="print-page">
@@ -566,19 +728,19 @@
                         <h2 style="margin:5pt 0; font-size:14pt;">Subjek: ${currentSub} | Unit: ${f.name}</h2>
                     </div>
                     <div class="print-meta"><span>${metaName}: ________________</span><span>${metaClass}: ________</span></div>
-                    <div class="page-title">Nota Pembelajaran ${dataChunks.length > 1 ? `(Page ${pageIdx + 1})` : ''}</div>
+                    <div class="page-title">${getUI('study')} ${dataChunks.length > 1 ? `(Page ${pageIdx + 1})` : ''}</div>
                     <table class="print-table">
-                        <thead><tr style="background:#eee;"><th>${bilLabel}</th><th>${qLabel} (Scrambled)</th><th>${aLabel} (Full)</th></tr></thead>
+                        <thead><tr style="background:#eee;"><th>${bilLabel}</th><th>${qLabel}</th><th>${aLabel}</th></tr></thead>
                         <tbody>${chunk.map((it, i) => { 
-                            let qContent = isBM ? it.scrambledSuku.toLowerCase() : (isChineseSub ? `<span class="print-pinyin">${it.pinyin}</span>${it.originalSuku !== it.ans ? `<span class="print-meaning">${it.originalSuku}</span>` : ''}` : it.originalSuku);
-                            let aContent = isBM ? it.ans.toLowerCase() : (isChineseSub ? `<span class="print-hanzi">${it.ans}</span>` : it.ans);
+                            let qContent = isBM ? it.scrambledSuku.toLowerCase() : (isChineseSub && currentSub !== 'MT' ? `<span class="print-pinyin">${it.pinyin}</span>${it.originalSuku !== it.ans ? `<span class="print-meaning">${it.originalSuku}</span>` : ''}` : it.originalSuku);
+                            let aContent = isBM ? it.ans.toLowerCase() : (isChineseSub && currentSub !== 'MT' ? `<span class="print-hanzi">${it.ans}</span>` : it.ans);
                             return `<tr><td width="10%">${(pageIdx * 20) + i + 1}</td><td width="50%">${qContent}</td><td>${aContent}</td></tr>` 
                         }).join('')}</tbody>
                     </table>
                 </div>`;
             });
 
-            // Section 2: Latihan Kendiri / Kuiz
+            // Section 2: Kuiz
             dataChunks.forEach((chunk, pageIdx) => {
                 finalHtml += `
                 <div class="print-page">
@@ -587,11 +749,11 @@
                         <h2 style="margin:5pt 0; font-size:14pt;">Subjek: ${currentSub} | Unit: ${f.name}</h2>
                     </div>
                     <div class="print-meta"><span>${metaName}: ________________</span><span>${metaClass}: ________</span></div>
-                    <div class="page-title">Latihan Kendiri / Kuiz ${dataChunks.length > 1 ? `(Page ${pageIdx + 1})` : ''}</div>
+                    <div class="page-title">${getUI('quiz')} ${dataChunks.length > 1 ? `(Page ${pageIdx + 1})` : ''}</div>
                     <table class="print-table">
-                        <thead><tr style="background:#eee;"><th>${bilLabel}</th><th>${qLabel} (Scrambled)</th><th>${aLabel}</th></tr></thead>
+                        <thead><tr style="background:#eee;"><th>${bilLabel}</th><th>${qLabel}</th><th>${aLabel}</th></tr></thead>
                         <tbody>${chunk.map((it, i) => {
-                             let qContent = isBM ? it.scrambledSuku.toLowerCase() : (isChineseSub ? `<span class="print-pinyin">${it.pinyin}</span>` : it.originalSuku);
+                             let qContent = isBM ? it.scrambledSuku.toLowerCase() : (isChineseSub && currentSub !== 'MT' ? `<span class="print-pinyin">${it.pinyin}</span>` : it.originalSuku);
                              return `<tr><td style="height:48px;">${(pageIdx * 20) + i + 1}</td><td>${qContent}</td><td></td></tr>`
                         }).join('')}</tbody>
                     </table>
@@ -608,7 +770,6 @@
         }
         function closePrintModal() { document.getElementById('print-modal').classList.add('hidden-panel'); }
         
-        // Settings Manager Logic (Fully English Interface)
         function toggleManager() { 
             document.getElementById('manager-modal').classList.toggle('hidden-panel'); 
             renderManagerTabs(); 
@@ -621,13 +782,7 @@
                 const b = document.createElement('button'); 
                 b.className = `px-6 py-2 rounded-xl font-bold transition ${activeEditSub===s?'bg-blue-600 text-white shadow-md':'bg-white text-gray-400 border border-gray-100'}`;
                 b.innerText = s; 
-                b.onclick = () => { 
-                    activeEditSub = s; 
-                    activeEditIdx = 0; 
-                    renderManagerTabs(); 
-                    renderManagerFolders(); 
-                    loadArea(); 
-                };
+                b.onclick = () => { activeEditSub = s; activeEditIdx = 0; renderManagerTabs(); renderManagerFolders(); loadArea(); };
                 tabs.appendChild(b);
             });
         }
@@ -639,11 +794,7 @@
                 const d = document.createElement('div'); 
                 d.className = `p-4 rounded-xl cursor-pointer ${activeEditIdx===i?'bg-blue-50 text-blue-600 border-l-8 border-blue-600 font-black':'bg-gray-50 border border-transparent'}`;
                 d.innerText = f.name; 
-                d.onclick = () => { 
-                    activeEditIdx = i; 
-                    renderManagerFolders(); 
-                    loadArea(); 
-                };
+                d.onclick = () => { activeEditIdx = i; renderManagerFolders(); loadArea(); };
                 list.appendChild(d);
             });
         }
@@ -651,58 +802,42 @@
         function loadArea() { 
             const textarea = document.getElementById('edit-area');
             const label = document.getElementById('edit-area-label');
-            const currentData = masterData[activeEditSub]?.[activeEditIdx];
-            
-            textarea.value = currentData ? currentData.content : '';
-            
-            if (activeEditSub === 'BM') {
-                label.innerText = "Edit Data (BM Format: suku-kata,word)";
-            } else if (['BC', 'SJ', 'SC'].includes(activeEditSub)) {
-                label.innerText = "Edit Data (Chinese Format: word,description)";
-            } else {
-                label.innerText = "Edit Data (Format: question,answer)";
-            }
+            textarea.value = masterData[activeEditSub]?.[activeEditIdx]?.content || '';
+            if (activeEditSub === 'BM') label.innerText = "Edit BM (Format: suku-kata,word)";
+            else if (activeEditSub === 'MT') label.innerText = "Edit Math (Format: 2x2,4)";
+            else label.innerText = "Edit Data (Format: question,answer)";
         }
         
         function saveChanges() { 
             if (!masterData[activeEditSub] || !masterData[activeEditSub][activeEditIdx]) return;
             masterData[activeEditSub][activeEditIdx].content = document.getElementById('edit-area').value; 
             saveToLocal();
-            showToast("Saved to this Computer"); 
+            showToast("Saved Successfully"); 
         }
         
         function showToast(m) { 
             const t = document.getElementById('toast'); 
-            t.innerText = m; 
-            t.style.opacity = '1'; 
+            t.innerText = m; t.style.opacity = '1'; 
             setTimeout(()=>t.style.opacity='0', 2000); 
         }
         
         function addFolder() { 
-            const n = prompt("Enter Unit Name (e.g. Unit 2):"); 
+            const n = prompt("Unit Name:"); 
             if(n) { 
                 if (!masterData[activeEditSub]) masterData[activeEditSub] = [];
                 masterData[activeEditSub].push({name: n, content: ''}); 
                 activeEditIdx = masterData[activeEditSub].length - 1; 
-                renderManagerFolders(); 
-                loadArea(); 
-                saveToLocal();
+                renderManagerFolders(); loadArea(); saveToLocal();
             } 
         }
         
         function speak(t, l, onEndCallback) { 
             window.speechSynthesis.cancel(); 
             const m = new SpeechSynthesisUtterance(t); 
-            m.lang = l; 
-            m.rate = 0.55; 
+            m.lang = l; m.rate = 0.6; 
             if (onEndCallback) m.onend = onEndCallback; 
             window.speechSynthesis.speak(m); 
         }
-
-        // Initialize UI with potentially loaded data
-        window.onload = () => {
-            // Initial check if we need to select something
-        };
     </script>
 </body>
 </html>
