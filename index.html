@@ -102,25 +102,28 @@
             transition: opacity 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        /* PDF 打印核心样式 */
+        /* PDF 打印核心样式 - 严格 A4 规范 */
         .print-page { 
             background: white; 
             padding: 2.54cm; 
             color: black; 
             font-family: "Times New Roman", serif; 
             width: 210mm;
-            min-height: 297mm;
+            height: 297mm;
             box-sizing: border-box;
             margin: 0 auto;
+            position: relative;
+            overflow: hidden; /* 防止溢出产生空白页 */
+            page-break-after: always;
         }
         .print-header { text-align: center; border-bottom: 2pt solid black; margin-bottom: 15px; padding-bottom: 5px; }
-        .print-meta { display: flex; justify-content: space-between; margin-bottom: 15px; font-weight: bold; font-size: 12pt; }
-        .print-table { width: 100%; border-collapse: collapse; }
-        .print-table th, .print-table td { border: 1pt solid #000; padding: 8px; text-align: left; vertical-align: middle; font-size: 11pt; }
+        .print-meta { display: flex; justify-content: space-between; margin-bottom: 12px; font-weight: bold; font-size: 12pt; }
+        .print-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        .print-table th, .print-table td { border: 1pt solid #000; padding: 7px 10px; text-align: left; vertical-align: middle; font-size: 11pt; overflow: hidden; }
         .print-pinyin { font-size: 10pt; color: #333; display: block; margin-bottom: 2px; }
         .print-hanzi { font-size: 14pt; font-weight: bold; }
         .print-meaning { font-size: 11pt; font-style: italic; color: #555; }
-        .page-title { background: #f2f2f2; padding: 6px 12px; border-left: 6px solid #000; font-size: 13pt; font-weight: bold; margin-bottom: 15px; }
+        .page-title { background: #f2f2f2; padding: 6px 12px; border-left: 6px solid #000; font-size: 13pt; font-weight: bold; margin-bottom: 12px; }
 
         @media print {
             @page { size: A4; margin: 0; }
@@ -128,12 +131,11 @@
             .no-print { display: none !important; }
             #print-section { display: block !important; width: 100% !important; }
             .print-page { 
-                page-break-after: always; 
                 border: none; 
                 box-shadow: none;
-                width: 210mm;
-                height: 297mm;
-                padding: 2.54cm; 
+            }
+            .print-page:last-child {
+                page-break-after: auto;
             }
         }
     </style>
@@ -516,7 +518,6 @@
             return scrambled.join('-');
         }
 
-        // PDF 导出功能优化
         function openPrintPreview() {
             if(currentFolderIdx === -1) return;
             const f = masterData[currentSub][currentFolderIdx];
@@ -528,12 +529,7 @@
                 let suku, full;
                 if (line.includes(',')) { [suku, full] = line.split(',').map(s => s.trim()); }
                 else { full = line.trim(); suku = full; }
-                return { 
-                    originalSuku: suku, 
-                    scrambledSuku: isBM ? scrambleSukuKata(suku) : suku, 
-                    ans: full, 
-                    pinyin: autoPinyin(full) 
-                };
+                return { originalSuku: suku, scrambledSuku: isBM ? scrambleSukuKata(suku) : suku, ans: full, pinyin: autoPinyin(full) };
             });
 
             const bilLabel = isBM ? "Bil" : getUI('bil');
@@ -542,7 +538,6 @@
             const metaName = isBM ? "Nama" : "姓名";
             const metaClass = isBM ? "Kelas" : "班级";
 
-            // 分页辅助函数 (每页 20 条)
             const chunkArray = (arr, size) => {
                 const res = [];
                 for (let i = 0; i < arr.length; i += size) res.push(arr.slice(i, i + size));
@@ -557,8 +552,8 @@
                 finalHtml += `
                 <div class="print-page">
                     <div class="print-header">
-                        <h1 style="margin:0; font-size:20pt;">Programme PRU - SJK(C) Chung San</h1>
-                        <h2 style="margin:5pt 0; font-size:16pt;">Subjek: ${currentSub} | Unit: ${f.name}</h2>
+                        <h1 style="margin:0; font-size:18pt;">Programme PRU - SJK(C) Chung San</h1>
+                        <h2 style="margin:5pt 0; font-size:14pt;">Subjek: ${currentSub} | Unit: ${f.name}</h2>
                     </div>
                     <div class="print-meta"><span>${metaName}: ________________</span><span>${metaClass}: ________</span></div>
                     <div class="page-title">Nota Pembelajaran ${dataChunks.length > 1 ? `(Page ${pageIdx + 1})` : ''}</div>
@@ -578,8 +573,8 @@
                 finalHtml += `
                 <div class="print-page">
                     <div class="print-header">
-                        <h1 style="margin:0; font-size:20pt;">Programme PRU - SJK(C) Chung San</h1>
-                        <h2 style="margin:5pt 0; font-size:16pt;">Subjek: ${currentSub} | Unit: ${f.name}</h2>
+                        <h1 style="margin:0; font-size:18pt;">Programme PRU - SJK(C) Chung San</h1>
+                        <h2 style="margin:5pt 0; font-size:14pt;">Subjek: ${currentSub} | Unit: ${f.name}</h2>
                     </div>
                     <div class="print-meta"><span>${metaName}: ________________</span><span>${metaClass}: ________</span></div>
                     <div class="page-title">Latihan Kendiri / Kuiz ${dataChunks.length > 1 ? `(Page ${pageIdx + 1})` : ''}</div>
@@ -587,7 +582,7 @@
                         <thead><tr style="background:#eee;"><th>${bilLabel}</th><th>${qLabel} (Scrambled)</th><th>${aLabel}</th></tr></thead>
                         <tbody>${chunk.map((it, i) => {
                              let qContent = isBM ? it.scrambledSuku.toLowerCase() : (isChineseSub ? `<span class="print-pinyin">${it.pinyin}</span>` : it.originalSuku);
-                             return `<tr><td style="height:55px;">${(pageIdx * 20) + i + 1}</td><td>${qContent}</td><td></td></tr>`
+                             return `<tr><td style="height:48px;">${(pageIdx * 20) + i + 1}</td><td>${qContent}</td><td></td></tr>`
                         }).join('')}</tbody>
                     </table>
                 </div>`;
