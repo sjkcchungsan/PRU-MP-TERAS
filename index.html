@@ -5,14 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>PRU (Programme Remember & Understand) - 实巴荷中山学校</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 引入自动拼音库 -->
     <script src="https://unpkg.com/pinyin-pro"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Playfair+Display:ital,wght@0,700;1,700&family=ZCOOL+KuaiLe&display=swap');
         
         :root { 
             --tv-safe-gap: 5vw; 
-            --safe-bottom: 120px;
         }
 
         body { 
@@ -27,7 +25,7 @@
             overflow: hidden; display: flex; flex-direction: column; z-index: 10;
         }
 
-        /* 科目渐变背景 */
+        /* 各科目渐变背景 */
         .bg-home { background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%); }
         .bg-bm { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); }
         .bg-bc { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); }
@@ -40,35 +38,24 @@
         .card-pop:hover { transform: scale(1.03); }
 
         .hidden-panel { display: none !important; }
-        .float-anim { animation: float 4s ease-in-out infinite; }
-        @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-12px); } }
+        
+        /* 文本阴影增强 - 确保在任何色彩下清晰 */
+        .outline-shadow {
+            text-shadow: 2px 2px 3px #000, -2px -2px 3px #000, 2px -2px 3px #000, -2px 2px 3px #000;
+        }
 
-        /* 文本层次样式 - 强化对比度与阴影 */
-        .pinyin-text { 
-            color: #ffffff; 
-            font-weight: 700; 
-            text-shadow: 2px 2px 8px rgba(0,0,0,0.6), -1px -1px 0 rgba(0,0,0,0.2);
-            letter-spacing: 0.1em;
-            filter: drop-shadow(0 4px 4px rgba(0,0,0,0.2));
-        } 
-        .hanzi-text { 
-            color: #ffffff; 
-            font-weight: 900; 
-            text-shadow: 0 10px 40px rgba(0,0,0,0.3);
-        } 
-        .meaning-text { 
-            color: #fff176; /* 亮柠檬黄 */
-            font-style: italic; 
-            font-weight: 700;
-            text-shadow: 2px 2px 6px rgba(0,0,0,0.5);
-        } 
+        /* Suku Kata 颜色方案 - 高亮分色 */
+        .suku-0 { color: #ffffff; } 
+        .suku-1 { color: #ffff00; } 
+        .suku-2 { color: #00ffff; } 
+        .suku-3 { color: #00ff00; } 
+        .suku-4 { color: #ff69b4; } 
 
-        .giant-text { font-size: min(12vw, 18vh); line-height: 1.1; }
+        .giant-text { font-size: min(12vw, 15vh); line-height: 1.1; }
 
-        /* 安全区 (Safe Zone) */
+        /* 安全区容器 */
         .safe-area-wrapper {
-            padding-left: var(--tv-safe-gap);
-            padding-right: var(--tv-safe-gap);
+            padding: 2vh var(--tv-safe-gap);
             width: 100%;
             height: 100%;
             display: flex;
@@ -76,6 +63,8 @@
             justify-content: center;
             align-items: center;
             box-sizing: border-box;
+            overflow: hidden;
+            position: relative;
         }
 
         .control-btn {
@@ -99,6 +88,22 @@
         .bottom-r { bottom: 3vh; right: 3vw; }
         .top-center { top: 3vh; left: 50%; transform: translateX(-50%); }
 
+        /* 反馈信息样式 - 提升到顶层，固定在屏幕上部 28% 位置，避免遮挡选项 */
+        #feedback {
+            position: absolute;
+            top: 28%; 
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            text-align: center;
+            z-index: 10000;
+            pointer-events: none;
+            opacity: 0;
+            font-size: 11vh;
+            font-weight: 900;
+            transition: opacity 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
         /* PDF 样式 */
         .print-page { background: white; padding: 1cm; color: black; font-family: "Times New Roman", serif; min-height: 29.7cm; }
         .print-header { text-align: center; border-bottom: 2pt solid black; margin-bottom: 10px; padding-bottom: 5px; }
@@ -112,7 +117,7 @@
         @media print {
             body { background: white; padding: 0; }
             .no-print { display: none !important; }
-            #print-section { display: block !important; }
+            #print-section { display: block !important; width: 100% !important; }
             .print-page { page-break-after: always; height: auto; margin: 0; border: none; padding: 1cm; width: 100%; }
         }
     </style>
@@ -120,7 +125,7 @@
 <body class="bg-home">
 
     <div class="app-maximizer">
-        <!-- 封面 -->
+        <!-- 封面入口 -->
         <div id="landing-page" class="h-full w-full flex flex-col items-center justify-center text-center p-10 fade-in">
             <div class="bg-white/40 backdrop-blur-2xl p-16 rounded-[4rem] shadow-2xl border-4 border-white/50 max-w-6xl w-full flex flex-row items-center gap-16">
                 <img src="LOGO SEKOLAH.png" alt="校徽" class="h-[40vh] w-auto drop-shadow-2xl float-anim" onerror="this.src='https://via.placeholder.com/400x400?text=LOGO'">
@@ -133,7 +138,7 @@
             </div>
         </div>
 
-        <!-- 主菜单 -->
+        <!-- 科目菜单 -->
         <div id="subject-menu" class="hidden-panel h-full w-full p-12 fade-in flex flex-col relative">
             <div class="flex justify-between items-center mb-6 relative z-[100] px-8">
                 <h3 class="text-xl font-black text-gray-700 uppercase tracking-widest">Pilih Subjek / 选择科目</h3>
@@ -161,7 +166,7 @@
                 </div>
             </div>
 
-            <!-- 单元选择 -->
+            <!-- 单元/活页夹选择 -->
             <div id="folder-selection" class="hidden-panel max-w-6xl mx-auto bg-white/60 backdrop-blur-3xl p-8 rounded-[3.5rem] shadow-2xl border-4 border-white/70 flex-1 flex flex-col overflow-hidden relative">
                 <div class="flex items-center justify-between mb-8 relative z-[200]">
                     <div class="flex items-center gap-6">
@@ -182,17 +187,16 @@
             </div>
         </div>
 
-        <!-- 游戏/温习 舞台 -->
+        <!-- 游戏核心展示区域 -->
         <div id="game-container" class="hidden-panel fixed inset-0 z-[2000] flex flex-col bg-home overflow-hidden">
             <div class="tv-corner top-l"><button onclick="exitGameAndStopAudio()" class="control-btn" id="btn-game-back">⬅ KEMBALI</button></div>
             <div class="tv-corner top-center pointer-events-none"><div id="game-title" class="text-2xl font-black text-white drop-shadow-lg uppercase">PRU</div></div>
             <div class="tv-corner top-r"><div class="control-btn border-none min-w-[100px] text-center"><span id="progress-val" class="text-xl font-black">0/0</span></div></div>
 
             <div class="safe-area-wrapper">
+                <div id="feedback" class="outline-shadow"></div>
                 <div id="game-stage" class="w-full flex flex-col items-center justify-center"></div>
             </div>
-
-            <div id="feedback" class="absolute bottom-[22%] left-0 w-full text-center text-[8vh] font-black drop-shadow-2xl transition-all duration-300 z-50 pointer-events-none"></div>
 
             <div class="tv-corner bottom-l flex gap-4">
                 <div id="prev-action" class="invisible"><button id="prev-btn" class="control-btn">⬅ SEBELUMNYA</button></div>
@@ -206,20 +210,20 @@
 
     <!-- 管理中心 -->
     <div id="manager-modal" class="hidden-panel fixed inset-0 z-[5000] bg-black/95 backdrop-blur-xl flex items-center justify-center p-10">
-        <div class="bg-white rounded-[3rem] w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
-            <div class="p-8 border-b flex justify-between bg-gray-50 text-gray-800">
+        <div class="bg-white rounded-[3rem] w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl text-gray-800">
+            <div class="p-8 border-b flex justify-between bg-gray-50">
                 <h2 class="text-3xl font-black">⚙️ 内容管理中心</h2>
                 <button onclick="toggleManager()" class="text-6xl text-gray-300 hover:text-gray-900 transition">&times;</button>
             </div>
             <div id="category-tabs" class="px-10 py-4 flex gap-2 bg-white border-b"></div>
-            <div class="flex-1 p-10 flex gap-8 overflow-hidden text-gray-800">
+            <div class="flex-1 p-10 flex gap-8 overflow-hidden">
                 <div class="w-1/3 border-r pr-6">
                     <div class="flex justify-between items-center mb-4"><h3 class="font-bold text-xl">单元列表</h3><button onclick="addFolder()" class="bg-blue-600 text-white px-4 py-1 rounded-xl">+ 新增</button></div>
                     <div id="manager-folder-list" class="space-y-2"></div>
                 </div>
                 <div class="w-2/3 flex flex-col">
-                    <label class="font-bold text-xl mb-4">编辑数据 (格式: 解释/意思, 汉词)</label>
-                    <textarea id="edit-area" class="flex-1 border-4 border-gray-100 bg-gray-50 rounded-3xl p-6 font-mono text-xl outline-none focus:border-blue-400" placeholder="例如:&#10;文明,文明&#10;肺,肺"></textarea>
+                    <label class="font-bold text-xl mb-4">编辑数据 (BM格式: se-ko-lah,sekolah)</label>
+                    <textarea id="edit-area" class="flex-1 border-4 border-gray-100 bg-gray-50 rounded-3xl p-6 font-mono text-xl outline-none focus:border-blue-400"></textarea>
                 </div>
             </div>
             <div class="p-8 bg-gray-50 border-t flex justify-end gap-4">
@@ -228,7 +232,7 @@
         </div>
     </div>
 
-    <!-- PDF 预览 -->
+    <!-- PDF 预览模态框 -->
     <div id="print-modal" class="hidden-panel fixed inset-0 z-[8000] bg-black/95 flex flex-col p-10">
         <div class="flex justify-between items-center text-white mb-6">
             <h2 class="text-4xl font-black">🖨️ PDF 预览</h2>
@@ -244,7 +248,6 @@
     <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-10 py-4 rounded-full z-[9999] opacity-0 transition-opacity font-bold">OK</div>
 
     <script>
-        // 核心数据
         var masterData = {
             'BM': [{ name: "Unit 1", content: "se-ko-lah,sekolah\nme-ja,meja\nke-ru-si,kerusi\nbu-ku,buku" }],
             'BC': [{ name: "生词 1", content: "苹果\n老师\n同学" }],
@@ -258,16 +261,22 @@
         var historyStep = -1;
 
         const uiText = {
-            'BM': { back: '⬅ KEMBALI', prev: '⬅ SEBELUMNYA', next: 'SETERUSNYA ➔', speak: '🔊 SEBUT', quiz: '🎮 Jawab Soalan', study: '📖 Nota Pembelajaran', print: '🖨️ Simpan PDF', name: 'Nama', kelas: 'Kelas', bil: 'Bil', question: 'Soalan', answer: 'Jawapan', betul: 'BETUL!', salah: 'SALAH!' },
-            'BC': { back: '⬅ 返回', prev: '⬅ 上一题', next: '下一个 ➔', speak: '🔊 朗读', quiz: '🎮 闯关模式', study: '📖 温习笔记', print: '🖨️ 保存PDF', name: '姓名', kelas: '班级', bil: '编号', question: '题目', answer: '答案词汇', betul: '正确！', salah: '错误！' },
+            'BM': { back: '⬅ KEMBALI', prev: '⬅ SEBELUMNYA', next: 'SETERUSNYA ➔', speak: '🔊 SEBUT', quiz: '🎮 Jawab Soalan', study: '📖 Nota Pembelajaran', print: '🖨️ PDF', name: 'Nama', kelas: 'Kelas', bil: 'Bil', question: 'Soalan', answer: 'Jawapan', betul: 'BETUL!', salah: 'SALAH!' },
+            'BC': { back: '⬅ 返回', prev: '⬅ 上一题', next: '下一个 ➔', speak: '🔊 朗读', quiz: '🎮 闯关模式', study: '📖 温习笔记', print: '🖨️ 保存PDF', name: '姓名', kelas: '班级', bil: '编号', question: '题目内容', answer: '答案词汇', betul: '正确！', salah: '错误！' },
             'BI': { back: '⬅ BACK', prev: '⬅ PREVIOUS', next: 'NEXT ➔', speak: '🔊 SPEAK', quiz: '🎮 Quiz Mode', study: '📖 Study Mode', print: '🖨️ Save PDF', name: 'Name', kelas: 'Class', bil: 'No.', question: 'Question', answer: 'Answer', betul: 'CORRECT!', salah: 'WRONG!' },
-            'SC': { back: '⬅ 返回', prev: '⬅ 上一题', next: '下一个 ➔', speak: '🔊 朗读', quiz: '🎮 闯关模式', study: '📖 温习笔记', print: '🖨️ 保存PDF', name: '姓名', kelas: '班级', bil: '编号', question: '题目', answer: '答案词汇', betul: '正确！', salah: '错误！' },
-            'SJ': { back: '⬅ 返回', prev: '⬅ 上一题', next: '下一个 ➔', speak: '🔊 朗读', quiz: '🎮 闯关模式', study: '📖 温习笔记', print: '🖨️ 保存PDF', name: '姓名', kelas: '班级', bil: '编号', question: '题目', answer: '答案词汇', betul: '正确！', salah: '错误！' }
+            'SC': { back: '⬅ 返回', prev: '⬅ 上一题', next: '下一个 ➔', speak: '🔊 朗读', quiz: '🎮 闯关模式', study: '📖 温习笔记', print: '🖨️ 保存PDF', name: '姓名', kelas: '班级', bil: '编号', question: '题目内容', answer: '答案词汇', betul: '正确！', salah: '错误！' },
+            'SJ': { back: '⬅ 返回', prev: '⬅ 上一题', next: '下一个 ➔', speak: '🔊 朗读', quiz: '🎮 闯关模式', study: '📖 温习笔记', print: '🖨️ 保存PDF', name: '姓名', kelas: '班级', bil: '编号', question: '题目内容', answer: '答案词汇', betul: '正确！', salah: '错误！' }
         };
 
         function autoPinyin(text) {
             if (!text || !/[\u4e00-\u9fa5]/.test(text)) return text;
             try { return pinyinPro.pinyin(text, { toneType: 'symbol' }); } catch (e) { return text; }
+        }
+
+        // 音节着色显示
+        function getColoredSukuKata(text, hideHyphen = false) {
+            if (!text || !text.includes('-')) return `<span class="suku-0 outline-shadow">${text || ''}</span>`;
+            return text.split('-').map((s, i) => `<span class="suku-${i % 5} outline-shadow">${s}</span>`).join(hideHyphen ? '' : '<span class="opacity-40 mx-0.5 outline-shadow">-</span>');
         }
 
         function getUI(key) {
@@ -319,7 +328,7 @@
             if (!masterData[sub]) return;
             masterData[sub].forEach((f, i) => {
                 const card = document.createElement('div');
-                card.className = "bg-white p-6 rounded-3xl shadow-lg border-4 border-gray-100 flex items-center justify-center h-28 card-pop text-xl font-black text-gray-700 text-center";
+                card.className = "bg-white p-4 rounded-3xl shadow-lg border-4 border-gray-100 flex items-center justify-center h-24 card-pop text-lg font-black text-gray-700 text-center";
                 card.innerText = f.name;
                 card.onclick = () => {
                     currentFolderIdx = i;
@@ -354,20 +363,11 @@
             return map[currentSub] || 'zh-CN';
         }
 
-        function getSpeechText(word) {
-            if (currentSub === 'BI') return `${word.toLowerCase().split('').join(', ')}, ${word}`;
-            return word;
-        }
-
-        function getColoredSukuKata(text) {
-            if (!text.includes('-')) return `<span class="suku-0">${text.toLowerCase()}</span>`;
-            return text.split('-').map((s, i) => `<span class="suku-${i % 5}">${s.toLowerCase()}</span>`).join('');
-        }
-
         function renderLevel(moveStep = 1) {
             stopAllAudioLogic();
             const stage = document.getElementById('game-stage'); stage.innerHTML = '';
             document.getElementById('feedback').innerText = '';
+            document.getElementById('feedback').style.opacity = '0';
             document.getElementById('speak-action').className = 'invisible';
             document.getElementById('next-action').className = 'visible';
             document.getElementById('prev-action').className = 'invisible';
@@ -409,22 +409,18 @@
             document.getElementById('speak-btn').onclick = () => { stopAllAudioLogic(); speak(hanzi, getLangCode()); };
 
             let contentHTML = '';
-            const isChineseSub = ['BC', 'SJ', 'SC'].includes(currentSub);
-
             if (currentSub === 'BM') {
-                contentHTML = `<div class="text-[8vh] mb-8">🔊</div><div class="sub-giant-text text-center" style="font-size:10vh;">${meaning.toLowerCase()}</div>`;
-            } else if (isChineseSub) {
+                contentHTML = `<div class="text-[8vh] mb-12">🔊</div><div class="giant-text tracking-normal text-center uppercase font-black">${getColoredSukuKata(meaning, true)}</div>`;
+            } else if (['BC', 'SJ', 'SC'].includes(currentSub)) {
                 contentHTML = `
-                    <div class="text-[7vh] mb-6">🔊</div>
+                    <div class="text-[7vh] mb-4">🔊</div>
                     <div class="flex flex-col items-center text-center">
-                        <div class="pinyin-text text-5xl mb-4 font-bold uppercase tracking-widest">${pinyin}</div>
-                        <div class="hanzi-text giant-text mb-6">${hanzi}</div>
-                        ${meaning ? `<div class="meaning-text text-5xl">${meaning}</div>` : ''}
+                        <div class="pinyin-text text-5xl mb-4 font-bold uppercase tracking-widest outline-shadow">${pinyin}</div>
+                        <div class="hanzi-text giant-text mb-6 outline-shadow">${hanzi}</div>
+                        ${meaning ? `<div class="meaning-text text-5xl outline-shadow">${meaning}</div>` : ''}
                     </div>`;
-            } else if (currentSub === 'BI') {
-                contentHTML = `<div class="text-[8vh] mb-8">🔊</div><div class="text-center"><div class="hanzi-text giant-text mb-4 uppercase">${meaning}</div><div class="text-4xl text-white/50">${hanzi}</div></div>`;
             } else {
-                contentHTML = `<div class="text-center"><div class="hanzi-text giant-text uppercase">${meaning}</div><div class="text-5xl text-white/50 mt-8">${hanzi}</div></div>`;
+                contentHTML = `<div class="text-[8vh] mb-8">🔊</div><div class="text-center"><div class="hanzi-text giant-text mb-4 uppercase outline-shadow">${meaning}</div><div class="text-4xl text-white/50">${hanzi}</div></div>`;
             }
             stage.innerHTML = `<div class="flex flex-col items-center justify-center w-full px-8">${contentHTML}</div>`;
             setTimeout(() => speak(hanzi, getLangCode()), 300);
@@ -433,18 +429,18 @@
         function renderQuiz(pinyin, hanzi, meaning, rawLines) {
             const stage = document.getElementById('game-stage');
             const isChineseSub = ['BC', 'SJ', 'SC'].includes(currentSub);
+            const isBM = currentSub === 'BM';
 
-            // 闯关模式布局优化：缩小扬声器，增加安全区
             stage.innerHTML = `
                 <div class="flex flex-col items-center w-full max-w-5xl">
-                    <button id="quiz-sound-btn" class="bg-white/20 p-8 rounded-full hover:bg-white/40 transition mb-8 pointer-events-auto">
+                    <button id="quiz-sound-btn" class="bg-white/20 p-8 rounded-full hover:bg-white/40 transition mb-12 pointer-events-auto">
                         <span style="font-size: 5vh;">🔊</span>
                     </button>
                     <div id="quiz-display" class="flex flex-col items-center mb-10 text-center w-full px-4">
                         ${isChineseSub ? `
-                            <div class="pinyin-text text-5xl mb-3 font-bold uppercase">${pinyin}</div>
-                            ${meaning ? `<div class="meaning-text text-3xl opacity-90">${meaning}</div>` : ''}
-                        ` : `<div class="text-white text-6xl font-bold uppercase">${currentSub==='BI' ? meaning : pinyin}</div>`}
+                            <div class="pinyin-text text-5xl mb-3 font-bold uppercase outline-shadow">${pinyin}</div>
+                            ${meaning ? `<div class="meaning-text text-3xl opacity-90 outline-shadow">${meaning}</div>` : ''}
+                        ` : (isBM ? '' : `<div class="text-white text-6xl font-bold uppercase outline-shadow">${currentSub==='BI' ? meaning : pinyin}</div>`)}
                     </div>
                     <div id="quiz-options" class="grid grid-cols-2 gap-8 w-full relative z-20 pb-16"></div>
                 </div>
@@ -454,7 +450,7 @@
             sBtn.onclick = () => speak(hanzi, getLangCode());
             
             const grid = document.getElementById('quiz-options');
-            let target = isChineseSub ? hanzi : (currentSub==='BI' ? meaning : pinyin);
+            let target = isBM ? meaning : (isChineseSub ? hanzi : (currentSub==='BI' ? meaning : pinyin));
             
             let opts = [target]; 
             while(opts.length < 2) {
@@ -462,14 +458,19 @@
                 let rM, rH;
                 if (rLine.includes(',')) { [rM, rH] = rLine.split(',').map(s => s.trim()); }
                 else { rH = rLine.trim(); rM = rH; }
-                let rVal = isChineseSub ? rH : (currentSub==='BI' ? rM : autoPinyin(rH));
+                let rVal = isBM ? rM : (isChineseSub ? rH : (currentSub==='BI' ? rM : autoPinyin(rH)));
                 if(!opts.includes(rVal)) opts.push(rVal);
             }
             
             opts.sort(() => Math.random() - 0.5).forEach(o => {
                 const btn = document.createElement('button');
-                btn.className = "bg-white p-8 rounded-[3rem] text-[6vh] font-black shadow-2xl active:scale-95 transition-transform pointer-events-auto text-gray-800 border-b-8 border-gray-200";
-                btn.innerText = o.toUpperCase();
+                btn.className = "bg-white p-8 rounded-[3rem] text-[6vh] font-black shadow-2xl active:scale-95 transition-transform pointer-events-auto text-gray-800 border-b-8 border-gray-200 flex justify-center items-center";
+                if (isBM) {
+                    const pair = rawLines.find(l => l.includes(o));
+                    const rawSuku = pair ? pair.split(',')[0].trim() : o;
+                    btn.innerHTML = getColoredSukuKata(rawSuku, true);
+                    btn.className += " uppercase tracking-normal";
+                } else { btn.innerText = o.toUpperCase(); }
                 btn.onclick = () => checkQuiz(o === target);
                 grid.appendChild(btn);
             });
@@ -488,8 +489,16 @@
         function renderEnd(total) {
             const stage = document.getElementById('game-stage');
             stage.innerHTML = `<div class="text-center text-white"><div class="text-7xl font-black mb-10 uppercase">SELESAI</div>
-                <div class="text-[12vh] leading-none mb-10">${correctCount} / ${total}</div>
+                <div class="text-[12vh] leading-none mb-10 outline-shadow">${correctCount} / ${total}</div>
                 <button onclick="exitGameAndStopAudio()" class="bg-white text-blue-900 px-20 py-6 rounded-full text-4xl font-black shadow-2xl pointer-events-auto">KEMBALI</button></div>`;
+        }
+
+        function scrambleSukuKata(text) {
+            if (!text || !text.includes('-')) return text;
+            const parts = text.split('-');
+            let scrambled;
+            do { scrambled = [...parts].sort(() => Math.random() - 0.5); } while (scrambled.join('-') === text && parts.length > 1);
+            return scrambled.join('-');
         }
 
         function openPrintPreview() {
@@ -497,12 +506,18 @@
             const f = masterData[currentSub][currentFolderIdx];
             const rawLines = f.content.split('\n').filter(l => l.trim() !== '');
             const isChineseSub = ['BC', 'SJ', 'SC'].includes(currentSub);
+            const isBM = currentSub === 'BM';
+
             const map = rawLines.map(line => {
-                let m, h;
-                if (line.includes(',')) { [m, h] = line.split(',').map(s => s.trim()); }
-                else { h = line.trim(); m = ""; }
-                return { meaning: m, hanzi: h, pinyin: autoPinyin(h) };
+                let suku, full;
+                if (line.includes(',')) { [suku, full] = line.split(',').map(s => s.trim()); }
+                else { full = line.trim(); suku = full; }
+                return { originalSuku: suku, scrambledSuku: isBM ? scrambleSukuKata(suku) : suku, ans: full, pinyin: autoPinyin(full) };
             });
+
+            const bilLabel = isBM ? "Bil" : getUI('bil');
+            const qLabel = isBM ? "Soalan" : getUI('question');
+            const aLabel = isBM ? "Jawapan" : getUI('answer');
 
             let h = `
             <div class="print-page">
@@ -510,13 +525,14 @@
                     <h1 style="margin:0; font-size:20pt;">PRU Programme - SJK(C) Chung San</h1>
                     <h2 style="margin:5pt 0; font-size:16pt;">Subjek: ${currentSub} | Unit: ${f.name}</h2>
                 </div>
-                <div class="print-meta"><span>${getUI('name')}: ________________</span><span>${getUI('kelas')}: ________</span></div>
-                <h3 style="background:#f2f2f2; padding:8px; border-left:8px solid #000; font-size:12pt;"> 温习笔记 (Nota Pembelajaran)</h3>
+                <div class="print-meta"><span>${isBM ? 'Nama' : '姓名'}: ________________</span><span>${isBM ? 'Kelas' : '班级'}: ________</span></div>
+                <h3 style="background:#f2f2f2; padding:8px; border-left:8px solid #000; font-size:12pt;">Nota Pembelajaran (温习笔记)</h3>
                 <table class="print-table">
-                    <thead><tr style="background:#eee;"><th>编号</th><th>题目 (Pinyin/Meaning)</th><th>答案 (Hanzi)</th></tr></thead>
+                    <thead><tr style="background:#eee;"><th>${bilLabel}</th><th>${qLabel} (Scrambled)</th><th>${aLabel} (Full)</th></tr></thead>
                     <tbody>${map.map((it, i) => { 
-                        let qDisp = isChineseSub ? `<span class="print-pinyin">${it.pinyin}</span>${it.meaning ? `<span class="print-meaning">${it.meaning}</span>` : ''}` : it.meaning;
-                        let aDisp = isChineseSub ? `<span class="print-hanzi">${it.hanzi}</span>` : it.hanzi;
+                        // Nota Pembelajaran: BM 题目展示打乱顺序的音节，答案展示完整单词
+                        let qDisp = isBM ? it.scrambledSuku.toLowerCase() : (isChineseSub ? `<span class="print-pinyin">${it.pinyin}</span>${it.originalSuku !== it.ans ? `<span class="print-meaning">${it.originalSuku}</span>` : ''}` : it.originalSuku);
+                        let aDisp = isBM ? it.ans.toLowerCase() : (isChineseSub ? `<span class="print-hanzi">${it.ans}</span>` : it.ans);
                         return `<tr><td width="10%">${i+1}</td><td width="50%">${qDisp}</td><td>${aDisp}</td></tr>` 
                     }).join('')}</tbody>
                 </table>
@@ -524,14 +540,15 @@
             <div class="print-page">
                 <div class="print-header">
                     <h1 style="margin:0; font-size:20pt;">PRU Programme - SJK(C) Chung San</h1>
-                    <h2 style="margin:5pt 0; font-size:16pt;">练习测试 (Latihan Kendiri)</h2>
+                    <h2 style="margin:5pt 0; font-size:16pt;">Latihan Kendiri (自修练习)</h2>
                 </div>
-                <div class="print-meta"><span>${getUI('name')}: ________________</span><span>${getUI('kelas')}: ________</span></div>
-                <h3 style="background:#f2f2f2; padding:8px; border-left:8px solid #000; font-size:12pt;">闯关挑战 (Kuiz)</h3>
+                <div class="print-meta"><span>${isBM ? 'Nama' : '姓名'}: ________________</span><span>${isBM ? 'Kelas' : '班级'}: ________</span></div>
+                <h3 style="background:#f2f2f2; padding:8px; border-left:8px solid #000; font-size:12pt;">Kuiz (闯关测试)</h3>
                 <table class="print-table">
-                    <thead><tr style="background:#eee;"><th>编号</th><th>题目内容</th><th>学生答案</th></tr></thead>
+                    <thead><tr style="background:#eee;"><th>${bilLabel}</th><th>${qLabel} (Scrambled)</th><th>${aLabel}</th></tr></thead>
                     <tbody>${map.map((it, i) => {
-                         let qDisp = isChineseSub ? `<span class="print-pinyin">${it.pinyin}</span>${it.meaning ? `<br><span class="print-meaning">${it.meaning}</span>` : ''}` : it.meaning;
+                         // Latihan Kendiri: BM 题目展示打乱顺序的音节，答案留空
+                         let qDisp = isBM ? it.scrambledSuku.toLowerCase() : (isChineseSub ? `<span class="print-pinyin">${it.pinyin}</span>` : it.originalSuku);
                          return `<tr><td style="height:55px;">${i+1}</td><td>${qDisp}</td><td></td></tr>`
                     }).join('')}</tbody>
                 </table>
