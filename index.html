@@ -39,12 +39,10 @@
 
         .hidden-panel { display: none !important; }
         
-        /* Text Outlines for Legibility */
         .outline-shadow {
             text-shadow: 2px 2px 3px #000, -2px -2px 3px #000, 2px -2px 3px #000, -2px 2px 3px #000;
         }
 
-        /* Suku Kata Color Palette */
         .suku-0 { color: #ffffff; } 
         .suku-1 { color: #ffff00; } 
         .suku-2 { color: #00ffff; } 
@@ -184,7 +182,7 @@
                 </div>
             </div>
 
-            <!-- Folder Selection View -->
+            <!-- Unit Selection -->
             <div id="folder-selection" class="hidden-panel max-w-6xl mx-auto bg-white/60 backdrop-blur-3xl p-8 rounded-[3.5rem] shadow-2xl border-4 border-white/70 flex-1 flex flex-col overflow-hidden relative">
                 <div class="flex items-center justify-between mb-8 relative z-[200]">
                     <div class="flex items-center gap-6">
@@ -200,13 +198,13 @@
                 <div id="folder-grid" class="grid grid-cols-4 gap-4 overflow-y-auto pr-2 pb-10 relative z-10"></div>
             </div>
 
-            <!-- Management Access Button (English) -->
+            <!-- Control Center Trigger -->
             <div id="manager-btn-container" class="absolute bottom-6 left-0 w-full flex justify-center no-print">
-                <button onclick="toggleManager()" class="bg-gray-900 text-white px-8 py-3 rounded-full shadow-2xl font-bold">⚙️ CONTROL CENTER</button>
+                <button onclick="toggleManager()" class="bg-gray-900 text-white px-8 py-3 rounded-full shadow-2xl font-bold uppercase tracking-wider">⚙️ Control Center</button>
             </div>
         </div>
 
-        <!-- Game Stage -->
+        <!-- Stage Container -->
         <div id="game-container" class="hidden-panel fixed inset-0 z-[2000] flex flex-col bg-home overflow-hidden">
             <div class="tv-corner top-l"><button onclick="exitGameAndStopAudio()" class="control-btn" id="btn-game-back">⬅ KEMBALI</button></div>
             <div class="tv-corner top-center pointer-events-none"><div id="game-title" class="text-2xl font-black text-white drop-shadow-lg uppercase">PRU</div></div>
@@ -227,37 +225,38 @@
         </div>
     </div>
 
-    <!-- Management Center Modal (English for non-Chinese Teachers) -->
+    <!-- Management Center (English Interface) -->
     <div id="manager-modal" class="hidden-panel fixed inset-0 z-[5000] bg-black/95 backdrop-blur-xl flex items-center justify-center p-10">
         <div class="bg-white rounded-[3rem] w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl text-gray-800">
             <div class="p-8 border-b flex justify-between bg-gray-50">
-                <h2 class="text-3xl font-black">⚙️ CONTENT MANAGEMENT</h2>
+                <h2 class="text-3xl font-black uppercase tracking-tight">⚙️ Control Center</h2>
                 <button onclick="toggleManager()" class="text-6xl text-gray-300 hover:text-gray-900 transition">&times;</button>
             </div>
             <div id="category-tabs" class="px-10 py-4 flex gap-2 bg-white border-b"></div>
             <div class="flex-1 p-10 flex gap-8 overflow-hidden">
                 <div class="w-1/3 border-r pr-6">
                     <div class="flex justify-between items-center mb-4">
-                        <h3 class="font-bold text-xl">Unit List</h3>
-                        <button onclick="addFolder()" class="bg-blue-600 text-white px-4 py-1 rounded-xl">+ Add New</button>
+                        <h3 class="font-bold text-xl uppercase text-gray-400 tracking-widest">Units</h3>
+                        <button onclick="addFolder()" class="bg-blue-600 text-white px-5 py-2 rounded-xl font-bold shadow-md hover:bg-blue-700 transition">+ Add New</button>
                     </div>
-                    <div id="manager-folder-list" class="space-y-2"></div>
+                    <div id="manager-folder-list" class="space-y-2 overflow-y-auto max-h-[50vh] pr-2"></div>
                 </div>
                 <div class="w-2/3 flex flex-col">
-                    <label id="edit-area-label" class="font-bold text-xl mb-4">Edit Data (Format: question,answer)</label>
-                    <textarea id="edit-area" class="flex-1 border-4 border-gray-100 bg-gray-50 rounded-3xl p-6 font-mono text-xl outline-none focus:border-blue-400" placeholder="Example for BM:&#10;se-ko-lah,sekolah&#10;Example for Science:&#10;lung,lung"></textarea>
+                    <label id="edit-area-label" class="font-bold text-xl mb-4 text-blue-900">Edit Data</label>
+                    <textarea id="edit-area" class="flex-1 border-4 border-gray-100 bg-gray-50 rounded-3xl p-6 font-mono text-xl outline-none focus:border-blue-400 focus:bg-white transition-all shadow-inner" placeholder="Format: question,answer"></textarea>
+                    <div class="mt-4 text-sm text-gray-400 font-medium italic">Tip: Use comma (,) to separate the question and answer. One entry per line.</div>
                 </div>
             </div>
             <div class="p-8 bg-gray-50 border-t flex justify-end gap-4">
-                <button onclick="saveChanges()" class="px-12 py-4 rounded-2xl bg-blue-600 text-white font-black shadow-lg">💾 SAVE CHANGES</button>
+                <button onclick="saveChanges()" class="px-14 py-5 rounded-2xl bg-blue-600 text-white font-black shadow-lg hover:scale-105 active:scale-95 transition-all text-xl uppercase tracking-widest">💾 Save to Browser</button>
             </div>
         </div>
     </div>
 
-    <!-- PDF Preview Modal -->
+    <!-- PDF Modal -->
     <div id="print-modal" class="hidden-panel fixed inset-0 z-[8000] bg-black/95 flex flex-col p-10 no-print">
         <div class="flex justify-between items-center text-white mb-6">
-            <h2 class="text-4xl font-black">🖨️ PDF Preview (A4 Worksheet)</h2>
+            <h2 class="text-4xl font-black">🖨️ PDF Preview</h2>
             <div class="flex gap-6">
                 <button onclick="executePrint()" class="bg-blue-600 px-12 py-5 rounded-2xl font-black text-2xl shadow-xl hover:bg-blue-500">PRINT</button>
                 <button onclick="closePrintModal()" class="bg-white/20 px-12 py-5 rounded-2xl font-bold text-2xl hover:bg-white/30">CLOSE</button>
@@ -270,15 +269,22 @@
     <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-10 py-4 rounded-full z-[9999] opacity-0 transition-opacity font-bold">OK</div>
 
     <script>
-        var masterData = {
-            'BM': [{ name: "Unit 1", content: "se-ko-lah,sekolah\nme-ja,meja\nke-ru-si,kerusi\nbu-ku,buku" }],
-            'BC': [{ name: "生词 1", content: "苹果\n老师\n同学" }],
-            'BI': [{ name: "Vocab 1", content: "Apple,苹果\nTeacher,老师\nStudent,学生" }],
-            'MT': [{ name: "Multiply", content: "2x2,4\n5x5,25" }],
-            'SC': [{ name: "Sains 1", content: "肺,肺\n心脏,心脏\n氧气,氧气" }],
-            'SJ': [{ name: "Sejarah 1", content: "历史,历史\n文化,文化\n文明,文明\n遗产,遗产" }]
+        // Data Management - Local Storage Priority
+        const STORAGE_KEY = 'PRU_CHUNG_SAN_LOCAL_DATA';
+        
+        const defaultData = {
+            'BM': [{ name: "Unit 1", content: "se-ko-lah,sekolah\nme-ja,meja" }],
+            'BC': [{ name: "Unit 1", content: "老师,老师\n学生,学生" }],
+            'BI': [], 'MT': [], 'SC': [], 'SJ': []
         };
 
+        let masterData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || defaultData;
+
+        function saveToLocal() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(masterData));
+        }
+
+        // Global State
         var currentSub = '', currentFolderIdx = -1, currentMode = 'quiz', correctCount = 0, playedIndices = [], activeEditSub = 'BM', activeEditIdx = 0;
         var historyStep = -1;
 
@@ -346,8 +352,8 @@
             document.getElementById('btn-print').innerText = getUI('print');
 
             const grid = document.getElementById('folder-grid'); grid.innerHTML = '';
-            if (!masterData[sub]) return;
-            masterData[sub].forEach((f, i) => {
+            const folders = masterData[sub] || [];
+            folders.forEach((f, i) => {
                 const card = document.createElement('div');
                 card.className = "bg-white p-4 rounded-3xl shadow-lg border-4 border-gray-100 flex items-center justify-center h-24 card-pop text-lg font-black text-gray-700 text-center";
                 card.innerText = f.name;
@@ -551,7 +557,7 @@
             const dataChunks = chunkArray(map, 20);
             let finalHtml = '';
 
-            // Section 1: Nota Pembelajaran
+            // Section 1: Nota Pembelajaran - Both Q show scrambled for BM
             dataChunks.forEach((chunk, pageIdx) => {
                 finalHtml += `
                 <div class="print-page">
@@ -649,7 +655,6 @@
             
             textarea.value = currentData ? currentData.content : '';
             
-            // Adjust dynamic labels based on subject
             if (activeEditSub === 'BM') {
                 label.innerText = "Edit Data (BM Format: suku-kata,word)";
             } else if (['BC', 'SJ', 'SC'].includes(activeEditSub)) {
@@ -662,7 +667,8 @@
         function saveChanges() { 
             if (!masterData[activeEditSub] || !masterData[activeEditSub][activeEditIdx]) return;
             masterData[activeEditSub][activeEditIdx].content = document.getElementById('edit-area').value; 
-            showToast("Saved Successfully"); 
+            saveToLocal();
+            showToast("Saved to this Computer"); 
         }
         
         function showToast(m) { 
@@ -680,6 +686,7 @@
                 activeEditIdx = masterData[activeEditSub].length - 1; 
                 renderManagerFolders(); 
                 loadArea(); 
+                saveToLocal();
             } 
         }
         
@@ -691,6 +698,11 @@
             if (onEndCallback) m.onend = onEndCallback; 
             window.speechSynthesis.speak(m); 
         }
+
+        // Initialize UI with potentially loaded data
+        window.onload = () => {
+            // Initial check if we need to select something
+        };
     </script>
 </body>
 </html>
