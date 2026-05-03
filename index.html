@@ -39,12 +39,12 @@
 
         .hidden-panel { display: none !important; }
         
-        /* 文本阴影增强 - 确保在任何色彩下清晰 */
+        /* 文本阴影增强 */
         .outline-shadow {
             text-shadow: 2px 2px 3px #000, -2px -2px 3px #000, 2px -2px 3px #000, -2px 2px 3px #000;
         }
 
-        /* Suku Kata 颜色方案 - 高亮分色 */
+        /* Suku Kata 颜色方案 */
         .suku-0 { color: #ffffff; } 
         .suku-1 { color: #ffff00; } 
         .suku-2 { color: #00ffff; } 
@@ -53,7 +53,6 @@
 
         .giant-text { font-size: min(12vw, 15vh); line-height: 1.1; }
 
-        /* 安全区容器 */
         .safe-area-wrapper {
             padding: 2vh var(--tv-safe-gap);
             width: 100%;
@@ -88,7 +87,6 @@
         .bottom-r { bottom: 3vh; right: 3vw; }
         .top-center { top: 3vh; left: 50%; transform: translateX(-50%); }
 
-        /* 反馈信息样式 - 提升到顶层，固定在屏幕上部 28% 位置，避免遮挡选项 */
         #feedback {
             position: absolute;
             top: 28%; 
@@ -104,21 +102,39 @@
             transition: opacity 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        /* PDF 样式 */
-        .print-page { background: white; padding: 1cm; color: black; font-family: "Times New Roman", serif; min-height: 29.7cm; }
-        .print-header { text-align: center; border-bottom: 2pt solid black; margin-bottom: 10px; padding-bottom: 5px; }
-        .print-meta { display: flex; justify-content: space-between; margin-bottom: 10px; font-weight: bold; font-size: 12pt; }
+        /* PDF 打印核心样式 */
+        .print-page { 
+            background: white; 
+            padding: 2.54cm; 
+            color: black; 
+            font-family: "Times New Roman", serif; 
+            width: 210mm;
+            min-height: 297mm;
+            box-sizing: border-box;
+            margin: 0 auto;
+        }
+        .print-header { text-align: center; border-bottom: 2pt solid black; margin-bottom: 15px; padding-bottom: 5px; }
+        .print-meta { display: flex; justify-content: space-between; margin-bottom: 15px; font-weight: bold; font-size: 12pt; }
         .print-table { width: 100%; border-collapse: collapse; }
-        .print-table th, .print-table td { border: 1pt solid #000; padding: 10px; text-align: left; vertical-align: middle; }
-        .print-pinyin { font-size: 11pt; color: #333; display: block; margin-bottom: 2px; }
-        .print-hanzi { font-size: 15pt; font-weight: bold; }
-        .print-meaning { font-size: 12pt; font-style: italic; color: #555; }
+        .print-table th, .print-table td { border: 1pt solid #000; padding: 8px; text-align: left; vertical-align: middle; font-size: 11pt; }
+        .print-pinyin { font-size: 10pt; color: #333; display: block; margin-bottom: 2px; }
+        .print-hanzi { font-size: 14pt; font-weight: bold; }
+        .print-meaning { font-size: 11pt; font-style: italic; color: #555; }
+        .page-title { background: #f2f2f2; padding: 6px 12px; border-left: 6px solid #000; font-size: 13pt; font-weight: bold; margin-bottom: 15px; }
 
         @media print {
-            body { background: white; padding: 0; }
+            @page { size: A4; margin: 0; }
+            body { background: white !important; margin: 0; padding: 0; }
             .no-print { display: none !important; }
             #print-section { display: block !important; width: 100% !important; }
-            .print-page { page-break-after: always; height: auto; margin: 0; border: none; padding: 1cm; width: 100%; }
+            .print-page { 
+                page-break-after: always; 
+                border: none; 
+                box-shadow: none;
+                width: 210mm;
+                height: 297mm;
+                padding: 2.54cm; 
+            }
         }
     </style>
 </head>
@@ -166,7 +182,7 @@
                 </div>
             </div>
 
-            <!-- 单元/活页夹选择 -->
+            <!-- 单元选择 -->
             <div id="folder-selection" class="hidden-panel max-w-6xl mx-auto bg-white/60 backdrop-blur-3xl p-8 rounded-[3.5rem] shadow-2xl border-4 border-white/70 flex-1 flex flex-col overflow-hidden relative">
                 <div class="flex items-center justify-between mb-8 relative z-[200]">
                     <div class="flex items-center gap-6">
@@ -187,7 +203,7 @@
             </div>
         </div>
 
-        <!-- 游戏核心展示区域 -->
+        <!-- 游戏区域 -->
         <div id="game-container" class="hidden-panel fixed inset-0 z-[2000] flex flex-col bg-home overflow-hidden">
             <div class="tv-corner top-l"><button onclick="exitGameAndStopAudio()" class="control-btn" id="btn-game-back">⬅ KEMBALI</button></div>
             <div class="tv-corner top-center pointer-events-none"><div id="game-title" class="text-2xl font-black text-white drop-shadow-lg uppercase">PRU</div></div>
@@ -232,16 +248,16 @@
         </div>
     </div>
 
-    <!-- PDF 预览模态框 -->
-    <div id="print-modal" class="hidden-panel fixed inset-0 z-[8000] bg-black/95 flex flex-col p-10">
+    <!-- PDF 预览面板 -->
+    <div id="print-modal" class="hidden-panel fixed inset-0 z-[8000] bg-black/95 flex flex-col p-10 no-print">
         <div class="flex justify-between items-center text-white mb-6">
-            <h2 class="text-4xl font-black">🖨️ PDF 预览</h2>
+            <h2 class="text-4xl font-black">🖨️ PDF 预览 (A4 练习卷)</h2>
             <div class="flex gap-6">
                 <button onclick="executePrint()" class="bg-blue-600 px-12 py-5 rounded-2xl font-black text-2xl shadow-xl hover:bg-blue-500">PRINT</button>
                 <button onclick="closePrintModal()" class="bg-white/20 px-12 py-5 rounded-2xl font-bold text-2xl hover:bg-white/30">CLOSE</button>
             </div>
         </div>
-        <div id="print-preview-content" class="flex-1 bg-white rounded-3xl overflow-y-auto shadow-inner"></div>
+        <div id="print-preview-content" class="flex-1 bg-gray-200 rounded-3xl overflow-y-auto p-10 shadow-inner"></div>
     </div>
 
     <div id="print-section" class="hidden"></div>
@@ -273,7 +289,6 @@
             try { return pinyinPro.pinyin(text, { toneType: 'symbol' }); } catch (e) { return text; }
         }
 
-        // 音节着色显示
         function getColoredSukuKata(text, hideHyphen = false) {
             if (!text || !text.includes('-')) return `<span class="suku-0 outline-shadow">${text || ''}</span>`;
             return text.split('-').map((s, i) => `<span class="suku-${i % 5} outline-shadow">${s}</span>`).join(hideHyphen ? '' : '<span class="opacity-40 mx-0.5 outline-shadow">-</span>');
@@ -501,6 +516,7 @@
             return scrambled.join('-');
         }
 
+        // PDF 导出功能优化
         function openPrintPreview() {
             if(currentFolderIdx === -1) return;
             const f = masterData[currentSub][currentFolderIdx];
@@ -512,48 +528,72 @@
                 let suku, full;
                 if (line.includes(',')) { [suku, full] = line.split(',').map(s => s.trim()); }
                 else { full = line.trim(); suku = full; }
-                return { originalSuku: suku, scrambledSuku: isBM ? scrambleSukuKata(suku) : suku, ans: full, pinyin: autoPinyin(full) };
+                return { 
+                    originalSuku: suku, 
+                    scrambledSuku: isBM ? scrambleSukuKata(suku) : suku, 
+                    ans: full, 
+                    pinyin: autoPinyin(full) 
+                };
             });
 
             const bilLabel = isBM ? "Bil" : getUI('bil');
             const qLabel = isBM ? "Soalan" : getUI('question');
             const aLabel = isBM ? "Jawapan" : getUI('answer');
+            const metaName = isBM ? "Nama" : "姓名";
+            const metaClass = isBM ? "Kelas" : "班级";
 
-            let h = `
-            <div class="print-page">
-                <div class="print-header">
-                    <h1 style="margin:0; font-size:20pt;">PRU Programme - SJK(C) Chung San</h1>
-                    <h2 style="margin:5pt 0; font-size:16pt;">Subjek: ${currentSub} | Unit: ${f.name}</h2>
-                </div>
-                <div class="print-meta"><span>${isBM ? 'Nama' : '姓名'}: ________________</span><span>${isBM ? 'Kelas' : '班级'}: ________</span></div>
-                <h3 style="background:#f2f2f2; padding:8px; border-left:8px solid #000; font-size:12pt;">Nota Pembelajaran (温习笔记)</h3>
-                <table class="print-table">
-                    <thead><tr style="background:#eee;"><th>${bilLabel}</th><th>${qLabel} (Scrambled)</th><th>${aLabel} (Full)</th></tr></thead>
-                    <tbody>${map.map((it, i) => { 
-                        // Nota Pembelajaran: BM 题目展示打乱顺序的音节，答案展示完整单词
-                        let qDisp = isBM ? it.scrambledSuku.toLowerCase() : (isChineseSub ? `<span class="print-pinyin">${it.pinyin}</span>${it.originalSuku !== it.ans ? `<span class="print-meaning">${it.originalSuku}</span>` : ''}` : it.originalSuku);
-                        let aDisp = isBM ? it.ans.toLowerCase() : (isChineseSub ? `<span class="print-hanzi">${it.ans}</span>` : it.ans);
-                        return `<tr><td width="10%">${i+1}</td><td width="50%">${qDisp}</td><td>${aDisp}</td></tr>` 
-                    }).join('')}</tbody>
-                </table>
-            </div>
-            <div class="print-page">
-                <div class="print-header">
-                    <h1 style="margin:0; font-size:20pt;">PRU Programme - SJK(C) Chung San</h1>
-                    <h2 style="margin:5pt 0; font-size:16pt;">Latihan Kendiri (自修练习)</h2>
-                </div>
-                <div class="print-meta"><span>${isBM ? 'Nama' : '姓名'}: ________________</span><span>${isBM ? 'Kelas' : '班级'}: ________</span></div>
-                <h3 style="background:#f2f2f2; padding:8px; border-left:8px solid #000; font-size:12pt;">Kuiz (闯关测试)</h3>
-                <table class="print-table">
-                    <thead><tr style="background:#eee;"><th>${bilLabel}</th><th>${qLabel} (Scrambled)</th><th>${aLabel}</th></tr></thead>
-                    <tbody>${map.map((it, i) => {
-                         // Latihan Kendiri: BM 题目展示打乱顺序的音节，答案留空
-                         let qDisp = isBM ? it.scrambledSuku.toLowerCase() : (isChineseSub ? `<span class="print-pinyin">${it.pinyin}</span>` : it.originalSuku);
-                         return `<tr><td style="height:55px;">${i+1}</td><td>${qDisp}</td><td></td></tr>`
-                    }).join('')}</tbody>
-                </table>
-            </div>`;
-            document.getElementById('print-preview-content').innerHTML = h;
+            // 分页辅助函数 (每页 20 条)
+            const chunkArray = (arr, size) => {
+                const res = [];
+                for (let i = 0; i < arr.length; i += size) res.push(arr.slice(i, i + size));
+                return res;
+            };
+
+            const dataChunks = chunkArray(map, 20);
+            let finalHtml = '';
+
+            // 第一部分：温习笔记 (Nota Pembelajaran)
+            dataChunks.forEach((chunk, pageIdx) => {
+                finalHtml += `
+                <div class="print-page">
+                    <div class="print-header">
+                        <h1 style="margin:0; font-size:20pt;">Programme PRU - SJK(C) Chung San</h1>
+                        <h2 style="margin:5pt 0; font-size:16pt;">Subjek: ${currentSub} | Unit: ${f.name}</h2>
+                    </div>
+                    <div class="print-meta"><span>${metaName}: ________________</span><span>${metaClass}: ________</span></div>
+                    <div class="page-title">Nota Pembelajaran ${dataChunks.length > 1 ? `(Page ${pageIdx + 1})` : ''}</div>
+                    <table class="print-table">
+                        <thead><tr style="background:#eee;"><th>${bilLabel}</th><th>${qLabel} (Scrambled)</th><th>${aLabel} (Full)</th></tr></thead>
+                        <tbody>${chunk.map((it, i) => { 
+                            let qContent = isBM ? it.scrambledSuku.toLowerCase() : (isChineseSub ? `<span class="print-pinyin">${it.pinyin}</span>${it.originalSuku !== it.ans ? `<span class="print-meaning">${it.originalSuku}</span>` : ''}` : it.originalSuku);
+                            let aContent = isBM ? it.ans.toLowerCase() : (isChineseSub ? `<span class="print-hanzi">${it.ans}</span>` : it.ans);
+                            return `<tr><td width="10%">${(pageIdx * 20) + i + 1}</td><td width="50%">${qContent}</td><td>${aContent}</td></tr>` 
+                        }).join('')}</tbody>
+                    </table>
+                </div>`;
+            });
+
+            // 第二部分：自修练习 (Latihan Kendiri / Kuiz)
+            dataChunks.forEach((chunk, pageIdx) => {
+                finalHtml += `
+                <div class="print-page">
+                    <div class="print-header">
+                        <h1 style="margin:0; font-size:20pt;">Programme PRU - SJK(C) Chung San</h1>
+                        <h2 style="margin:5pt 0; font-size:16pt;">Subjek: ${currentSub} | Unit: ${f.name}</h2>
+                    </div>
+                    <div class="print-meta"><span>${metaName}: ________________</span><span>${metaClass}: ________</span></div>
+                    <div class="page-title">Latihan Kendiri / Kuiz ${dataChunks.length > 1 ? `(Page ${pageIdx + 1})` : ''}</div>
+                    <table class="print-table">
+                        <thead><tr style="background:#eee;"><th>${bilLabel}</th><th>${qLabel} (Scrambled)</th><th>${aLabel}</th></tr></thead>
+                        <tbody>${chunk.map((it, i) => {
+                             let qContent = isBM ? it.scrambledSuku.toLowerCase() : (isChineseSub ? `<span class="print-pinyin">${it.pinyin}</span>` : it.originalSuku);
+                             return `<tr><td style="height:55px;">${(pageIdx * 20) + i + 1}</td><td>${qContent}</td><td></td></tr>`
+                        }).join('')}</tbody>
+                    </table>
+                </div>`;
+            });
+
+            document.getElementById('print-preview-content').innerHTML = finalHtml;
             document.getElementById('print-modal').classList.remove('hidden-panel');
         }
 
