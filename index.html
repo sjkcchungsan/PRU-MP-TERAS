@@ -105,7 +105,7 @@
         /* PDF 打印核心样式 - 严格 A4 规范 */
         .print-page { 
             background: white; 
-            padding: 2.54cm; 
+            padding: 2.54cm; /* Normal Margin: 1 inch */
             color: black; 
             font-family: "Times New Roman", serif; 
             width: 210mm;
@@ -113,30 +113,31 @@
             box-sizing: border-box;
             margin: 0 auto;
             position: relative;
-            overflow: hidden; /* 防止溢出产生空白页 */
+            overflow: hidden; 
             page-break-after: always;
+            box-shadow: none;
         }
         .print-header { text-align: center; border-bottom: 2pt solid black; margin-bottom: 15px; padding-bottom: 5px; }
         .print-meta { display: flex; justify-content: space-between; margin-bottom: 12px; font-weight: bold; font-size: 12pt; }
         .print-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        .print-table th, .print-table td { border: 1pt solid #000; padding: 7px 10px; text-align: left; vertical-align: middle; font-size: 11pt; overflow: hidden; }
+        .print-table th, .print-table td { border: 1pt solid #000; padding: 7px 10px; text-align: left; vertical-align: middle; font-size: 11pt; overflow: hidden; word-break: break-word; }
         .print-pinyin { font-size: 10pt; color: #333; display: block; margin-bottom: 2px; }
         .print-hanzi { font-size: 14pt; font-weight: bold; }
         .print-meaning { font-size: 11pt; font-style: italic; color: #555; }
         .page-title { background: #f2f2f2; padding: 6px 12px; border-left: 6px solid #000; font-size: 13pt; font-weight: bold; margin-bottom: 12px; }
 
         @media print {
-            @page { size: A4; margin: 0; }
+            @page { size: A4 portrait; margin: 0; } /* 控制打印机 A4 纸张，边距已在 print-page 内定义 */
             body { background: white !important; margin: 0; padding: 0; }
-            .no-print { display: none !important; }
+            /* 隐藏所有操作 UI */
+            .no-print, nav, header, footer, .menu, .sidebar, .toolbar, .btn, .actions, .print-preview, .preview-button, .control-btn, .action-btn, #landing-page, #subject-menu, #manager-modal, #print-modal h2, #print-modal .flex {
+                display: none !important;
+                visibility: hidden !important;
+            }
             #print-section { display: block !important; width: 100% !important; }
-            .print-page { 
-                border: none; 
-                box-shadow: none;
-            }
-            .print-page:last-child {
-                page-break-after: auto;
-            }
+            .app-maximizer { position: static; height: auto; width: auto; display: block; }
+            .print-page { border: none !important; margin: 0 !important; width: 210mm !important; height: 297mm !important; }
+            .print-page:last-child { page-break-after: auto; }
         }
     </style>
 </head>
@@ -205,7 +206,7 @@
             </div>
         </div>
 
-        <!-- 游戏区域 -->
+        <!-- 游戏核心渲染区域 -->
         <div id="game-container" class="hidden-panel fixed inset-0 z-[2000] flex flex-col bg-home overflow-hidden">
             <div class="tv-corner top-l"><button onclick="exitGameAndStopAudio()" class="control-btn" id="btn-game-back">⬅ KEMBALI</button></div>
             <div class="tv-corner top-center pointer-events-none"><div id="game-title" class="text-2xl font-black text-white drop-shadow-lg uppercase">PRU</div></div>
@@ -226,7 +227,7 @@
         </div>
     </div>
 
-    <!-- 管理中心 -->
+    <!-- 内容管理中心 -->
     <div id="manager-modal" class="hidden-panel fixed inset-0 z-[5000] bg-black/95 backdrop-blur-xl flex items-center justify-center p-10">
         <div class="bg-white rounded-[3rem] w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl text-gray-800">
             <div class="p-8 border-b flex justify-between bg-gray-50">
